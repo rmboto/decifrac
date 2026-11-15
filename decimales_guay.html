@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El Gran Reto de Decimales y Fracciones</title>
+<style>
+/* ==========================================================================
+   1. BASE Y VARIABLES
+   ========================================================================== */
+:root{
+  --bg1:#120b3a; --bg2:#2b1b78; --ink:#1b1340;
+  --yellow:#ffd23f; --pink:#e8266f; --cyan:#27e0e6; --green:#2fd07a;
+  --red:#ff5a5f; --orange:#ff9f1c; --violet:#7c4dff;
+  --glass:rgba(255,255,255,.09); --glass2:rgba(255,255,255,.16);
+  --radius:20px;
+  --font:"Arial Rounded MT Bold","Nunito","Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{
+  margin:0; font-family:var(--font); color:#fff; font-size:18px; line-height:1.35;
+  background:var(--bg1);
+  -webkit-tap-highlight-color:transparent;
+}
+/* Fondo fijo de plató (en una capa propia para que no se corte al desplazar la página) */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(circle at 12% 8%, #5a35e0 0, transparent 42%),
+    radial-gradient(circle at 92% 88%, rgba(232,38,111,.55) 0, transparent 45%),
+    radial-gradient(circle at 80% 5%, rgba(39,224,230,.25) 0, transparent 35%),
+    linear-gradient(135deg,var(--bg1),var(--bg2));
+}
+h1,h2,h3,p{margin:0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:4px solid #fff; outline-offset:3px}
+.modal :focus-visible{outline-color:var(--violet)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-999px;top:0;background:#fff;color:var(--ink);padding:.6rem 1rem;z-index:100;border-radius:0 0 12px 0;font-weight:800}
+.skip:focus{left:0}
+
+#app{min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;display:flex;min-height:0;padding:0 1rem 1rem}
+.screen{flex:1;min-width:0}
+
+/* ---------- Botones ---------- */
+.btn{
+  border:0;border-radius:16px;padding:.65em 1.15em;font-weight:800;line-height:1.1;
+  box-shadow:0 5px 0 rgba(0,0,0,.35);transition:transform .12s, box-shadow .12s, filter .12s;
+  display:inline-flex;align-items:center;justify-content:center;gap:.4em;text-align:center;
+  background:#fff;color:var(--ink);min-height:48px;
+}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:grayscale(.5)}
+.btn-yellow{background:var(--yellow)}
+.btn-pink{background:var(--pink);color:#fff}
+.btn-cyan{background:var(--cyan)}
+.btn-green{background:var(--green)}
+.btn-red{background:#d92b3a;color:#fff}
+.btn-violet{background:var(--violet);color:#fff}
+.btn-ghost{background:var(--glass2);color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.45)}
+.btn-ghost:active{box-shadow:inset 0 0 0 2px rgba(255,255,255,.45)}
+.btn-ghost[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.btn-light{background:#ece8ff;color:var(--ink)}
+.btn-xl{font-size:clamp(1.3rem,2vw,2rem);padding:.7em 1.6em;border-radius:22px}
+.btn-sm{min-height:40px;padding:.4em .8em;font-size:.95rem;border-radius:12px}
+.icon-btn{
+  border:0;border-radius:12px;min-width:44px;min-height:44px;background:var(--glass2);color:#fff;
+  font-size:1.15rem;display:inline-flex;align-items:center;justify-content:center
+}
+.icon-btn:hover{background:rgba(255,255,255,.28)}
+
+/* ---------- Cabecera ---------- */
+.topbar{display:flex;align-items:center;gap:.6rem;padding:.6rem 1rem;flex-wrap:wrap}
+.brand{font-weight:900;font-size:1.25rem;letter-spacing:.01em;margin-right:auto;display:flex;align-items:center;gap:.5rem}
+.brand b{color:var(--yellow)}
+body[data-screen="setup"] .brand span{visibility:hidden}
+
+/* ---------- Fracciones en vertical ---------- */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .14em;font-variant-numeric:tabular-nums}
+.frac .fn{padding:0 .25em .08em;border-bottom:.1em solid currentColor;min-width:1.1em;text-align:center}
+.frac .fd{padding:.08em .25em 0;min-width:1.1em;text-align:center}
+
+/* ==========================================================================
+   2. PANTALLA INICIAL
+   ========================================================================== */
+#screen-setup{display:flex;flex-direction:column;align-items:center;gap:1.2rem;padding:.5rem 0 2rem}
+.hero{text-align:center}
+.hero .kicker{display:inline-block;background:var(--pink);padding:.3em 1em;border-radius:999px;font-weight:800;transform:rotate(-2deg);box-shadow:0 4px 0 rgba(0,0,0,.3);letter-spacing:.08em;text-transform:uppercase;font-size:clamp(.8rem,1.1vw,1.1rem)}
+.hero h1{
+  font-size:clamp(2rem,5.2vw,5.4rem);font-weight:900;line-height:1.02;margin-top:.5rem;
+  text-shadow:0 5px 0 rgba(0,0,0,.35);
+}
+.hero h1 .l1{display:block;color:var(--yellow)}
+.hero h1 .l2{display:block;font-size:.62em}
+.hero h1 .l2 em{font-style:normal;color:var(--cyan)}
+.hero .deco{font-size:clamp(1.4rem,2.4vw,2.4rem);display:flex;gap:1.2rem;justify-content:center;margin-top:.4rem}
+.hero .deco span{display:inline-block;animation:bob 2.6s ease-in-out infinite}
+.hero .deco span:nth-child(2){animation-delay:.3s}.hero .deco span:nth-child(3){animation-delay:.6s}
+.hero .deco span:nth-child(4){animation-delay:.9s}.hero .deco span:nth-child(5){animation-delay:1.2s}
+@keyframes bob{50%{transform:translateY(-10px) rotate(6deg)}}
+
+.setup-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:1.2rem;width:min(1400px,100%)}
+.box{background:var(--glass);border:2px solid rgba(255,255,255,.16);border-radius:var(--radius);padding:1.1rem 1.2rem;backdrop-filter:blur(6px)}
+.box h2{font-size:1.35rem;margin-bottom:.7rem;display:flex;align-items:center;gap:.5rem}
+.add-row{display:flex;gap:.6rem}
+.add-row input{flex:1;min-width:0}
+.field{background:#fff;color:var(--ink);border:3px solid transparent;border-radius:14px;padding:.6em .8em;font-weight:700;min-height:52px;font-size:1.15rem}
+.field:focus-visible{outline:4px solid var(--yellow);outline-offset:2px}
+.plist{list-style:none;padding:0;margin:.9rem 0 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:.6rem;max-height:38vh;overflow:auto}
+.plist li{display:flex;align-items:center;gap:.5rem;background:#fff;color:var(--ink);border-radius:14px;padding:.45rem .5rem .45rem .8rem;font-weight:800;animation:pop .3s both}
+.plist .pname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1.15rem}
+.plist .pscore{background:var(--yellow);border-radius:999px;padding:.15em .7em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.plist .icon-btn{background:#ece8ff;color:var(--ink)}
+.plist .icon-btn:hover{background:#d9d2ff}
+.empty{opacity:.8;font-style:italic;margin-top:.8rem}
+.seg{display:flex;flex-wrap:wrap;gap:.5rem}
+.seg label{position:relative}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:inline-flex;align-items:center;min-height:48px;padding:.4em 1em;border-radius:14px;background:var(--glass2);font-weight:800;box-shadow:inset 0 0 0 2px rgba(255,255,255,.4)}
+.seg input:checked + span{background:var(--yellow);color:var(--ink);box-shadow:0 4px 0 rgba(0,0,0,.3)}
+.seg input:focus-visible + span{outline:4px solid #fff;outline-offset:3px}
+.opts-col{display:flex;flex-direction:column;gap:1rem}
+.opts-btns{display:flex;flex-wrap:wrap;gap:.6rem}
+.start-wrap{display:flex;flex-direction:column;align-items:center;gap:.5rem}
+#btn-start{font-size:clamp(1.5rem,2.6vw,2.6rem);padding:.6em 1.8em;animation:pulse 1.8s ease-in-out infinite}
+#btn-start[disabled]{animation:none}
+@keyframes pulse{50%{transform:scale(1.04)}}
+.start-note{font-weight:700;opacity:.9;min-height:1.4em}
+
+/* ==========================================================================
+   3. PANTALLA DE JUEGO
+   ========================================================================== */
+#screen-game{display:grid;grid-template-columns:minmax(0,1fr) clamp(330px,24vw,450px);gap:1rem;align-items:start}
+body.panel-hidden #screen-game{grid-template-columns:minmax(0,1fr)}
+body.panel-hidden .modpanel{display:none}
+.stage{background:rgba(10,6,40,.55);border:2px solid rgba(255,255,255,.16);border-radius:26px;display:flex;flex-direction:column;min-height:70vh;overflow:hidden;position:relative}
+.stage.time-up{animation:flash 0.9s 2}
+@keyframes flash{50%{box-shadow:0 0 0 8px var(--red) inset}}
+.stage-top{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.8rem 1.2rem;background:rgba(255,255,255,.07);border-bottom:2px solid rgba(255,255,255,.12)}
+.qcount{font-weight:900;font-size:clamp(1.2rem,1.7vw,1.9rem);margin-right:.4rem}
+.qcount b{color:var(--yellow);font-size:1.25em}
+.chip{display:inline-flex;align-items:center;gap:.35em;border-radius:999px;padding:.3em .9em;font-weight:800;font-size:clamp(.85rem,1.05vw,1.15rem);background:var(--glass2);white-space:nowrap}
+.chip.dif-facil{background:var(--green);color:var(--ink)}
+.chip.dif-media{background:var(--yellow);color:var(--ink)}
+.chip.dif-reto{background:var(--pink);color:#fff}
+.chip.pts{background:#fff;color:var(--ink)}
+.chip.special{background:var(--orange);color:var(--ink)}
+.timer{margin-left:auto;display:flex;align-items:center;gap:.4rem}
+.ring{--p:1;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:1.35rem;font-variant-numeric:tabular-nums;
+  background:radial-gradient(circle,#1b1340 56%,transparent 58%),conic-gradient(var(--yellow) calc(var(--p)*360deg),rgba(255,255,255,.18) 0)}
+.ring.low{background:radial-gradient(circle,#4a0d16 56%,transparent 58%),conic-gradient(var(--red) calc(var(--p)*360deg),rgba(255,255,255,.18) 0);animation:pulse .5s infinite}
+.mini-score{display:none;list-style:none;margin:0;padding:.45rem 1.2rem;gap:.5rem;flex-wrap:wrap;background:rgba(0,0,0,.25)}
+body.panel-hidden .mini-score{display:flex}
+.mini-score li{background:var(--glass2);border-radius:999px;padding:.15em .8em;font-weight:800;font-size:.95rem}
+.mini-score li b{color:var(--yellow);margin-left:.3em}
+
+.stage-body{flex:1;min-height:0;overflow:auto;padding:clamp(.7rem,1.2vw,1.3rem) clamp(.8rem,2vw,2.2rem);display:flex;flex-direction:column;gap:.8rem}
+.stage-body.enter-next{animation:slideNext .45s cubic-bezier(.2,.8,.2,1) both}
+.stage-body.enter-prev{animation:slidePrev .45s cubic-bezier(.2,.8,.2,1) both}
+@keyframes slideNext{from{opacity:0;transform:translateX(60px)}}
+@keyframes slidePrev{from{opacity:0;transform:translateX(-60px)}}
+.prompt{font-size:clamp(1.35rem,2.2vw,2.6rem);font-weight:900;line-height:1.2;text-wrap:balance}
+.how{font-size:clamp(.9rem,1.05vw,1.15rem);opacity:.85;font-weight:700}
+.activity{display:flex;flex-direction:column;gap:1rem}
+.feedback{font-size:clamp(1rem,1.3vw,1.45rem);font-weight:900;border-radius:14px;padding:.4em .8em;text-align:center;animation:pop .35s both;line-height:1.15}
+.feedback.ok{background:var(--green);color:var(--ink)}
+.feedback.bad{background:#ffe1e3;color:#8a0f1c}
+.feedback.info{background:var(--glass2)}
+@keyframes pop{from{opacity:0;transform:scale(.85)}}
+.q-actions{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;padding:.6rem clamp(.8rem,2vw,2.2rem);border-top:2px solid rgba(255,255,255,.12)}
+.feedback-slot{flex:1 1 240px;min-width:0}
+.reveal{border-radius:18px;padding:.9rem 1.2rem;font-size:clamp(1rem,1.35vw,1.5rem);animation:pop .35s both}
+.reveal h3{font-size:1.1em;margin-bottom:.3em}
+.reveal.hint{background:#fff6cf;color:var(--ink);border-left:10px solid var(--orange)}
+.reveal.solution{background:#fff;color:var(--ink);border-left:10px solid var(--green)}
+.reveal .sol-answer{font-weight:900;font-size:1.25em;background:#d9ffe9;display:inline-block;padding:.2em .7em;border-radius:12px;margin:.2em 0 .5em}
+.reveal ol{margin:.2em 0 0;padding-left:1.4em}
+.reveal li{margin:.35em 0}
+
+.stage-nav{display:flex;align-items:center;gap:.7rem;padding:.7rem 1.2rem;background:rgba(255,255,255,.07);border-top:2px solid rgba(255,255,255,.12)}
+.dots{flex:1;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;list-style:none;margin:0;padding:0}
+.dot{width:38px;height:38px;border-radius:50%;border:0;background:var(--glass2);color:#fff;font-weight:800;font-size:.9rem;padding:0}
+.dot:hover{background:rgba(255,255,255,.32)}
+.dot.past{background:rgba(255,255,255,.34)}
+.dot.current{background:var(--yellow);color:var(--ink);transform:scale(1.18);box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.dot.star{box-shadow:inset 0 0 0 3px var(--orange)}
+
+/* ---------- Opciones (elección múltiple, V/F) ---------- */
+.mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.opt{
+  background:#fff;color:var(--ink);border:6px solid #fff;border-radius:22px;padding:.4em .9em;
+  font-size:clamp(1.3rem,2.1vw,2.4rem);font-weight:900;display:flex;align-items:center;gap:.7em;text-align:left;
+  min-height:clamp(80px,10vh,130px);box-shadow:0 6px 0 rgba(0,0,0,.35);transition:transform .12s;position:relative
+}
+.opt:hover{transform:translateY(-3px)}
+.opt-letter{flex:none;width:1.7em;height:1.7em;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.8em}
+.opt-0 .opt-letter{background:var(--pink)}.opt-1 .opt-letter{background:#0d8fa0}
+.opt-2 .opt-letter{background:#c26a00}.opt-3 .opt-letter{background:var(--violet)}
+.opt.selected{border-color:var(--yellow);background:#fff8d6;transform:scale(1.02);box-shadow:0 0 0 5px var(--ink),0 0 0 9px var(--yellow)}
+.opt.ok,.card.ok,.pitem.ok,.step.ok{border-color:#11a85a;background:#d9ffe9}
+.opt.bad,.card.bad,.pitem.bad,.step.bad{border-color:#d92b3a;background:#ffe1e3}
+.opt.ok::after,.step.ok::after{content:"✔";margin-left:auto;color:#0b7a40;font-size:1.2em}
+.opt.bad::after,.step.bad::after{content:"✘";margin-left:auto;color:#b01525;font-size:1.2em}
+.statement{background:#fff;color:var(--ink);border-radius:22px;padding:.8em 1em;font-size:clamp(1.4rem,2.5vw,2.9rem);font-weight:900;text-align:center;box-shadow:0 6px 0 rgba(0,0,0,.3)}
+.tf .opt{justify-content:center;text-align:center}
+
+/* ---------- Tarjetas arrastrables ---------- */
+.card{
+  background:#fff;color:var(--ink);border:5px solid #fff;border-radius:16px;font-weight:900;
+  font-size:clamp(1.2rem,1.9vw,2.1rem);padding:.3em .6em;min-width:3em;min-height:2.9em;
+  display:inline-flex;align-items:center;justify-content:center;position:relative;
+  box-shadow:0 5px 0 rgba(0,0,0,.35);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
+  transition:transform .12s
+}
+.card.selected{border-color:var(--yellow);background:#fff8d6;transform:translateY(-6px) rotate(-3deg);box-shadow:0 0 0 4px var(--ink),0 0 0 8px var(--yellow)}
+.card.drag-src{opacity:.3}
+.card.ok::after,.card.bad::after,.pitem.ok::after,.pitem.bad::after{position:absolute;top:-.55em;right:-.45em;width:1.3em;height:1.3em;border-radius:50%;display:grid;place-items:center;font-size:.6em;color:#fff}
+.card.ok::after,.pitem.ok::after{content:"✔";background:#11a85a}
+.card.bad::after,.pitem.bad::after{content:"✘";background:#d92b3a}
+.ghost{position:fixed;left:0;top:0;z-index:60;pointer-events:none;opacity:.95;box-shadow:0 16px 30px rgba(0,0,0,.5);transition:none;margin:0}
+.bank{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:center;min-height:5.2rem;padding:.8rem;border-radius:18px;border:3px dashed rgba(255,255,255,.4);background:rgba(255,255,255,.06)}
+.bank-empty{opacity:.7;font-weight:700}
+.bank-return{border:3px dashed var(--yellow);background:transparent;color:var(--yellow);border-radius:14px;padding:.5em .9em;font-weight:800;min-height:48px}
+.drop-hover{outline:5px solid var(--yellow)!important;outline-offset:2px;background:rgba(255,210,63,.18)!important}
+.slot-empty{width:100%;min-height:4.2rem;border:3px dashed rgba(255,255,255,.55);background:rgba(255,255,255,.07);border-radius:14px;color:rgba(255,255,255,.75);font-weight:700;font-size:.9rem}
+.slot-empty:hover{background:rgba(255,255,255,.18)}
+
+/* Ordenar */
+.order-row{display:flex;align-items:stretch;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.order-end{align-self:center;font-weight:900;font-size:clamp(.9rem,1.2vw,1.3rem);color:var(--yellow);text-transform:uppercase;letter-spacing:.05em}
+.oslot{display:flex;flex-direction:column;align-items:center;gap:.35rem;padding:.5rem;border-radius:18px;background:rgba(255,255,255,.08);min-width:clamp(86px,10vw,170px)}
+.oslot .pos{font-weight:800;opacity:.85;font-size:.95rem}
+.oslot .card{width:100%;min-height:3.6em}
+
+/* Fracción → decimal */
+.targets{display:grid;grid-template-columns:repeat(auto-fit,minmax(clamp(110px,12vw,190px),1fr));gap:.8rem}
+.target{background:rgba(255,255,255,.08);border-radius:18px;padding:.6rem;display:flex;flex-direction:column;gap:.5rem;align-items:center}
+.target-label{background:var(--cyan);color:var(--ink);font-weight:900;font-size:clamp(1.3rem,2vw,2.2rem);border-radius:14px;padding:.15em .7em;width:100%;text-align:center}
+.target .card{width:100%}
+
+/* Clasificar en columnas */
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem}
+.col{background:rgba(255,255,255,.08);border-radius:18px;padding:.6rem;display:flex;flex-direction:column;gap:.6rem;min-height:11rem;cursor:pointer}
+.col-head{border:0;border-radius:14px;font-weight:900;font-size:clamp(1.05rem,1.6vw,1.8rem);padding:.35em .5em;color:var(--ink);min-height:52px}
+.col:nth-child(1) .col-head{background:var(--cyan)}.col:nth-child(2) .col-head{background:var(--yellow)}.col:nth-child(3) .col-head{background:#ff8fb5}
+.col-body{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;align-content:flex-start;flex:1}
+
+/* Recta numérica */
+.nl-wrap{padding:0 7%}
+.nl{position:relative;height:clamp(9rem,15vw,13rem)}
+.nl-line{position:absolute;left:-6%;right:-6%;top:1.25rem;height:8px;background:#fff;border-radius:4px}
+.nl-line::before,.nl-line::after{content:"";position:absolute;top:50%;border:12px solid transparent;transform:translateY(-50%)}
+.nl-line::before{left:-14px;border-right-color:#fff;border-left:0}
+.nl-line::after{right:-14px;border-left-color:#fff;border-right:0}
+.nl-tick{position:absolute;top:0;transform:translateX(-50%);width:11.4%;display:flex;flex-direction:column;align-items:center;gap:.35rem}
+.nl-mark{width:6px;height:2.1rem;background:#fff;border-radius:3px;margin-top:.2rem}
+.nl-tick.major .nl-mark{height:2.7rem;width:8px;margin-top:0;background:var(--yellow)}
+.nl-label{font-weight:900;font-size:clamp(1.4rem,2.2vw,2.4rem);color:var(--yellow)}
+.nl-tick .card{width:100%;min-width:0;padding:.2em .15em;font-size:clamp(.95rem,1.6vw,1.8rem)}
+.nl-tick .slot-empty{font-size:0;min-height:clamp(3.2rem,5vw,4.6rem)}
+
+/* Colorear figura */
+.choc{display:grid;gap:8px;padding:14px;background:#5a3214;border-radius:22px;width:min(100%,clamp(320px,36vw,620px));margin:0 auto;box-shadow:0 8px 0 rgba(0,0,0,.35)}
+.cell{aspect-ratio:1.35;border-radius:10px;border:4px solid #c9a27a;background:#f6e9d8;padding:0;position:relative;transition:transform .12s, background .15s}
+.cell:hover{transform:scale(1.04)}
+.cell[aria-pressed="true"]{background:repeating-linear-gradient(45deg,#ff7a1a 0 12px,#ff9f1c 12px 24px);border-color:#fff}
+.cell[aria-pressed="true"]::after{content:"●";position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:1.2rem}
+.choc.ok{outline:8px solid var(--green)}.choc.bad{outline:8px solid var(--red)}
+
+/* Unir parejas */
+.pairs{position:relative;display:grid;grid-template-columns:auto auto;justify-content:space-between;width:min(100%,900px);margin:0 auto}
+.pairs svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.pcol{display:flex;flex-direction:column;gap:.8rem;position:relative;z-index:1}
+.pitem{background:#fff;color:var(--ink);border:6px solid #fff;border-radius:18px;font-weight:900;font-size:clamp(1.3rem,2vw,2.2rem);
+  min-width:clamp(110px,12vw,190px);min-height:3.1em;padding:.2em .6em;box-shadow:0 5px 0 rgba(0,0,0,.35);position:relative;display:flex;align-items:center;justify-content:center;gap:.5em}
+.pitem.selected{border-color:var(--yellow);background:#fff8d6;box-shadow:0 0 0 4px var(--ink),0 0 0 8px var(--yellow)}
+.pitem .tag{position:absolute;top:-.6em;left:-.6em;width:1.5em;height:1.5em;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:.6em}
+
+/* Detectar el paso incorrecto */
+.steps{display:flex;flex-direction:column;gap:.6rem}
+.step{background:#fff;color:var(--ink);border:6px solid #fff;border-radius:18px;padding:.3em .8em;font-size:clamp(1.2rem,1.8vw,2rem);font-weight:800;display:flex;align-items:center;gap:.8em;text-align:left;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+.step .n{flex:none;background:var(--violet);color:#fff;border-radius:12px;padding:.2em .6em;font-size:.75em}
+.step.selected{border-color:var(--yellow);background:#fff8d6;box-shadow:0 0 0 4px var(--ink),0 0 0 8px var(--yellow)}
+
+/* Completar huecos */
+.fill-line{background:rgba(255,255,255,.09);border-radius:20px;padding:.35em .8em;text-align:center;font-size:clamp(1.5rem,2.7vw,3rem);font-weight:900;line-height:1.5}
+.fill-compact .fill-line{font-size:clamp(1.3rem,2.1vw,2.3rem);padding:.25em .8em}
+.fill-compact{display:flex;flex-direction:column;gap:.6rem}
+.fill-line .lbl{display:inline-block;background:var(--yellow);color:var(--ink);border-radius:50%;width:1.5em;height:1.5em;line-height:1.5em;font-size:.7em;margin-right:.5em;vertical-align:middle}
+.blank{width:2.5em;text-align:center;border:4px solid var(--violet);border-radius:12px;background:#fff;color:var(--ink);font-weight:900;font-size:.9em;padding:.05em .1em;line-height:1.2}
+.blank.wide{width:3.6em}
+.blank.active{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,159,28,.5)}
+.blank.ok{border-color:#11a85a;background:#d9ffe9}
+.blank.bad{border-color:#d92b3a;background:#ffe1e3}
+.frac .blank{margin:.08em 0}
+.keypad{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.keypad .btn{min-width:58px;min-height:58px;font-size:1.5rem}
+
+/* Ilustraciones con CSS y emojis */
+.illus{background:rgba(255,255,255,.1);border-radius:20px;padding:.5rem 1rem;display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap}
+.class-grid{display:grid;grid-template-columns:repeat(10,auto);gap:.15rem .3rem;font-size:clamp(1.2rem,1.9vw,2.1rem);line-height:1.15}
+.illus .big{font-size:clamp(3rem,6vw,6rem);line-height:1}
+.price-tag{background:#fff;color:var(--ink);font-weight:900;font-size:clamp(1.6rem,3vw,3.2rem);padding:.2em .7em .2em 1.1em;border-radius:14px 22px 22px 14px;position:relative;box-shadow:0 5px 0 rgba(0,0,0,.3)}
+.price-tag::before{content:"";position:absolute;left:.4em;top:50%;width:.4em;height:.4em;border-radius:50%;background:var(--bg2);transform:translateY(-50%)}
+.sale{background:var(--red);color:#fff;font-weight:900;font-size:clamp(1.3rem,2.4vw,2.6rem);width:3.6em;height:3.6em;border-radius:50%;display:grid;place-items:center;transform:rotate(-12deg);box-shadow:0 5px 0 rgba(0,0,0,.3);border:4px dashed #fff}
+.recipe{display:grid;grid-template-columns:auto auto auto;gap:.4rem 1rem;align-items:center;font-weight:900;font-size:clamp(1.1rem,1.8vw,2rem)}
+.recipe .q{color:var(--yellow);font-size:1.3em}
+.route{width:100%;max-width:1000px}
+.route-bar{display:flex;height:clamp(54px,6vw,84px);border-radius:16px;overflow:hidden;border:4px solid #fff;font-weight:900;font-size:clamp(.95rem,1.5vw,1.6rem)}
+.route-bar div{display:flex;align-items:center;justify-content:center;gap:.3em;color:var(--ink);padding:0 .3em;text-align:center}
+.route-bar .am{width:40%;background:var(--cyan)}
+.route-bar .pm{width:33.333%;background:#ff8fb5}
+.route-bar .left{flex:1;background:repeating-linear-gradient(45deg,#fff 0 10px,#e7e2ff 10px 20px)}
+.route-ends{display:flex;justify-content:space-between;font-size:clamp(1.4rem,2.2vw,2.4rem);margin-bottom:.2rem}
+
+/* Pregunta de apuesta */
+.bet-gate{margin:auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:1rem;max-width:900px}
+.bet-badge{font-size:clamp(1.8rem,3.6vw,4rem);font-weight:900;color:var(--yellow);text-shadow:0 4px 0 rgba(0,0,0,.35);animation:bob 2.2s ease-in-out infinite}
+.bet-gate p{font-size:clamp(1.1rem,1.7vw,1.9rem);font-weight:700}
+.bet-opts{display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center}
+.bet-opts .btn{width:clamp(64px,6vw,96px);height:clamp(64px,6vw,96px);font-size:clamp(1.6rem,2.6vw,2.8rem);border-radius:50%}
+.bet-opts .btn[aria-pressed="true"]{background:var(--yellow);transform:scale(1.15);box-shadow:0 0 0 5px var(--ink),0 0 0 9px #fff}
+
+/* ==========================================================================
+   4. PANEL DEL MODERADOR
+   ========================================================================== */
+.modpanel{display:flex;flex-direction:column;gap:.8rem}
+.pbox{background:#fff;color:var(--ink);border-radius:20px;padding:.8rem .9rem}
+.pbox h3{font-size:1.1rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.score-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.35rem;max-height:32vh;overflow:auto}
+.score-row{display:flex;align-items:center;gap:.5rem;background:#f1edff;border-radius:12px;padding:.3rem .35rem .3rem .5rem;font-weight:800;position:relative}
+.score-row .rank{flex:none;width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:#fff;font-size:.85rem}
+.score-row.r1 .rank{background:var(--yellow);color:var(--ink)}
+.score-row .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-row .pts{font-size:1.35rem;font-variant-numeric:tabular-nums;min-width:2ch;text-align:right}
+.score-row .icon-btn{background:transparent;color:var(--ink);min-width:40px;min-height:40px}
+.score-row .icon-btn:hover{background:#d9d2ff}
+.score-row.bump{animation:bump 1.2s both}
+.score-row.bump.neg{animation-name:bumpNeg}
+@keyframes bump{0%{background:var(--yellow);transform:scale(1.07)}60%{background:var(--yellow)}100%{background:#f1edff}}
+@keyframes bumpNeg{0%{background:#ffb3b8;transform:scale(1.04)}60%{background:#ffb3b8}100%{background:#f1edff}}
+.float-delta{position:absolute;right:3.2rem;top:-.3rem;font-weight:900;font-size:1.5rem;color:#0b7a40;animation:floatUp 1.2s both;pointer-events:none;text-shadow:0 2px 0 #fff}
+.float-delta.neg{color:#b01525}
+@keyframes floatUp{from{opacity:0;transform:translateY(12px)}25%{opacity:1}to{opacity:0;transform:translateY(-26px)}}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;max-height:22vh;overflow:auto;padding:4px}
+.pchip{border:3px solid #cfc6ff;background:#fff;color:var(--ink);border-radius:999px;padding:.3em .85em;font-weight:800;min-height:44px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pchip[aria-pressed="true"]{background:var(--violet);border-color:var(--violet);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.pts-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-top:.6rem}
+.pts-btns .btn{font-size:1.35rem;padding:.4em .2em;min-height:56px}
+.pts-btns .btn.suggested{box-shadow:0 5px 0 rgba(0,0,0,.35),0 0 0 4px var(--ink)}
+.custom-row{display:flex;gap:.4rem;align-items:center;margin-top:.6rem}
+.custom-row label{font-weight:800;font-size:.9rem;flex:none}
+.custom-row input{flex:1;min-width:0;width:4em;border:3px solid #cfc6ff;border-radius:12px;padding:.35em .5em;font-weight:800;min-height:46px;background:#fff}
+.pbox .wide{width:100%;margin-top:.6rem}
+.history{list-style:none;margin:0 0 .5rem;padding:0;font-size:.92rem;font-weight:700;display:flex;flex-direction:column;gap:.2rem}
+.history li{display:flex;gap:.4rem;align-items:baseline;border-bottom:1px dashed #d8d2f5;padding-bottom:.15rem}
+.history .hq{flex:none;color:#5b4fa0;font-size:.82rem}
+.history .hn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history .hd{flex:none;font-variant-numeric:tabular-nums}
+.history .pos{color:#0b7a40}.history .neg{color:#b01525}
+.timer-set{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:.95rem;margin-top:.6rem}
+.timer-set select{flex:1;border:3px solid #cfc6ff;border-radius:12px;padding:.35em;font-weight:800;min-height:44px;background:#fff}
+.pnote{font-size:.85rem;font-weight:700;color:#5b4fa0;margin-top:.4rem}
+
+/* ==========================================================================
+   5. PANTALLA FINAL
+   ========================================================================== */
+#screen-final{display:flex;flex-direction:column;align-items:center;gap:1.1rem;padding:.3rem 0 2rem;text-align:center}
+.final-title{font-size:clamp(2rem,4.4vw,4.6rem);font-weight:900;color:var(--yellow);text-shadow:0 5px 0 rgba(0,0,0,.35)}
+.winner{font-size:clamp(1.3rem,2.5vw,2.8rem);font-weight:900;background:#fff;color:var(--ink);padding:.35em 1em;border-radius:999px;box-shadow:0 6px 0 rgba(0,0,0,.35);animation:pop .6s .5s both}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:clamp(.4rem,1.2vw,1.2rem);height:clamp(230px,36vh,400px);width:min(900px,100%)}
+.pod{flex:1 1 0;max-width:320px;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.pod-0{order:2}.pod-1{order:1}.pod-2{order:3}
+.pod-name{font-weight:900;font-size:clamp(1.05rem,1.8vw,1.9rem);max-width:100%;overflow-wrap:anywhere;line-height:1.1;text-align:center;animation:pop .5s 1s both}
+.pod-pts{font-weight:800;opacity:.95;margin-bottom:.3rem;animation:pop .5s 1.1s both}
+.pod-block{width:100%;border-radius:18px 18px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:.4rem;font-weight:900;font-size:clamp(1.3rem,2.3vw,2.6rem);color:var(--ink);transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.8,.2,1) both;box-shadow:inset 0 -12px 0 rgba(0,0,0,.12)}
+.pod.rank-1 .pod-block{height:62%;background:var(--yellow)}
+.pod.rank-2 .pod-block{height:46%;background:#dfe6f3;animation-delay:.15s}
+.pod.rank-3 .pod-block{height:32%;background:#f0a868;animation-delay:.3s}
+.pod.rank-1 .pod-name{color:var(--yellow)}
+@keyframes grow{from{transform:scaleY(0)}}
+.final-list{list-style:none;margin:0;padding:0;width:min(760px,100%);display:flex;flex-direction:column;gap:.45rem;text-align:left}
+.final-list li{display:flex;align-items:center;gap:.8rem;background:#fff;color:var(--ink);border-radius:14px;padding:.45rem .9rem;font-weight:800;font-size:clamp(1rem,1.5vw,1.6rem);animation:rowIn .5s both}
+.final-list li.win{background:var(--yellow)}
+.final-list .rank{flex:none;width:2.2em}
+.final-list .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes rowIn{from{opacity:0;transform:translateX(-40px)}}
+.final-actions{display:flex;flex-wrap:wrap;gap:.7rem;justify-content:center}
+.jump h3{margin-bottom:.5rem;font-size:1.15rem}
+.jump-grid{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;max-width:760px}
+.jump-grid .dot{width:46px;height:46px;font-size:1rem}
+
+/* ==========================================================================
+   6. MODALES, AVISOS Y CONFETI
+   ========================================================================== */
+#confetti{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80}
+.modal-backdrop{position:fixed;inset:0;background:rgba(8,4,30,.72);display:grid;place-items:center;z-index:90;padding:1rem;animation:fade .2s both}
+@keyframes fade{from{opacity:0}}
+.modal{background:#fff;color:var(--ink);border-radius:24px;padding:1.3rem 1.4rem;width:min(560px,100%);max-height:92vh;display:flex;flex-direction:column;gap:.9rem;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:pop .25s both}
+.modal.wide{width:min(1000px,100%)}
+.modal h2{font-size:1.5rem}
+.modal-body{overflow:auto;font-size:1.1rem}
+.modal-body p + p{margin-top:.5rem}
+.modal-body label{display:block;font-weight:800;margin-bottom:.35rem}
+.modal-body .field{width:100%;border-color:#cfc6ff}
+.modal-actions{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:flex-end}
+.review{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.6rem}
+.review li{background:#f1edff;border-radius:14px;padding:.6rem .8rem;display:grid;grid-template-columns:1fr auto;gap:.3rem .8rem;align-items:center}
+.review .meta{font-size:.85rem;font-weight:800;color:#5b4fa0}
+.review .rq{font-weight:800}
+.review .ra{grid-column:1;font-weight:700}
+.review .ra b{background:#d9ffe9;padding:.05em .4em;border-radius:8px}
+.review .btn{grid-row:1 / span 3;grid-column:2}
+#toasts{position:fixed;left:50%;top:4.2rem;transform:translateX(-50%);display:flex;flex-direction:column;gap:.5rem;z-index:95;align-items:center;pointer-events:none;width:max-content;max-width:92vw}
+.toast{background:#fff;color:var(--ink);font-weight:800;padding:.6em 1.1em;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);border-left:8px solid var(--violet);animation:pop .25s both}
+#print-area{display:none}
+
+/* ==========================================================================
+   7. ADAPTACIÓN: PIZARRA 16:9, TABLETA E IMPRESIÓN
+   ========================================================================== */
+/* Pantallas grandes: todo cabe en la ventana y cada zona tiene su propio desplazamiento */
+@media (min-width:1100px) and (min-height:640px){
+  #app{height:100vh;height:100dvh}
+  .screen{overflow:auto}
+  #screen-game{overflow:hidden;align-items:stretch;height:100%}
+  .stage{min-height:0;height:100%}
+  .modpanel{overflow:auto;min-height:0;height:100%;padding-right:2px}
+}
+@media (min-width:1700px){ body{font-size:20px} }
+@media (max-width:1099px){
+  #screen-game{grid-template-columns:minmax(0,1fr)}
+  .setup-grid{grid-template-columns:1fr}
+  .modpanel{display:grid;grid-template-columns:1fr 1fr;align-items:start}
+  .modpanel .pbox:first-child{grid-row:span 2}
+  .dots{display:none}
+  .stage-nav{justify-content:space-between}
+}
+@media (max-width:700px){
+  .modpanel{grid-template-columns:1fr}
+  .mc-grid{grid-template-columns:1fr}
+  .class-grid{grid-template-columns:repeat(6,auto)}
+  .brand span{display:none}
+  .oslot{min-width:72px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+@media print{
+  body{background:#fff!important;color:#000}
+  body::before{display:none}
+  #app,#confetti,#toasts,#modal-root,.skip{display:none!important}
+  #print-area{display:block;padding:1cm;font-family:Arial,sans-serif}
+  #print-area h1{font-size:22pt;margin-bottom:.2cm}
+  #print-area h2{font-size:14pt;margin:.6cm 0 .2cm}
+  #print-area table{border-collapse:collapse;width:100%}
+  #print-area th,#print-area td{border:1px solid #444;padding:6px 10px;text-align:left}
+  #print-area th{background:#eee}
+}
+</style>
+</head>
+<body data-screen="setup">
+<a class="skip" href="#main">Saltar al contenido</a>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand" aria-hidden="true"><span>🎬 El Gran Reto de <b>Decimales y Fracciones</b></span></div>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-home" hidden>👥 Participantes</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-tofinal" hidden>🏁 Clasificación</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-panel" aria-pressed="false" hidden>🙈 Ocultar panel</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-sound" aria-pressed="false">🔇 Sonido: no</button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-fs" aria-pressed="false">⛶ Pantalla completa</button>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- ================= PANTALLA INICIAL ================= -->
+    <section id="screen-setup" class="screen" aria-labelledby="title">
+      <div class="hero">
+        <span class="kicker">Concurso de mates · 2.º ESO</span>
+        <h1 id="title"><span class="l1">El Gran Reto</span><span class="l2">de <em>Decimales</em> y <em>Fracciones</em></span></h1>
+        <div class="deco" aria-hidden="true"><span>🎯</span><span>½</span><span>🏆</span><span>0,75</span><span>🎉</span></div>
+      </div>
+
+      <div class="setup-grid">
+        <section class="box" aria-labelledby="h-players">
+          <h2 id="h-players">👥 Participantes o equipos</h2>
+          <form class="add-row" id="form-add" autocomplete="off">
+            <label class="sr-only" for="in-name">Nombre del participante o equipo</label>
+            <input class="field" id="in-name" maxlength="24" placeholder="Nombre del participante o equipo">
+            <button type="submit" class="btn btn-cyan">➕ Añadir</button>
+          </form>
+          <ul class="plist" id="plist" aria-live="polite"></ul>
+          <p class="empty" id="plist-empty">Todavía no hay nadie. Añade al menos 2 participantes o equipos.</p>
+        </section>
+
+        <section class="box opts-col" aria-labelledby="h-opts">
+          <h2 id="h-opts">⚙️ Opciones</h2>
+          <fieldset style="border:0;padding:0;margin:0">
+            <legend style="font-weight:800;margin-bottom:.4rem;padding:0">⏱ Tiempo por pregunta</legend>
+            <div class="seg" id="seg-timer">
+              <label><input type="radio" name="timer" value="0"><span>Sin tiempo</span></label>
+              <label><input type="radio" name="timer" value="30"><span>30 s</span></label>
+              <label><input type="radio" name="timer" value="45"><span>45 s</span></label>
+              <label><input type="radio" name="timer" value="60"><span>60 s</span></label>
+              <label><input type="radio" name="timer" value="90"><span>90 s</span></label>
+            </div>
+          </fieldset>
+          <div class="opts-btns">
+            <button type="button" class="btn btn-ghost" id="btn-fs2">⛶ Modo pantalla completa</button>
+            <button type="button" class="btn btn-ghost" id="btn-clear">🗑 Borrar partida guardada</button>
+          </div>
+          <p style="font-size:.95rem;opacity:.9">💾 La partida se guarda sola en este navegador: si cierras la página, podrás continuar donde la dejaste.</p>
+        </section>
+      </div>
+
+      <div class="start-wrap">
+        <button type="button" class="btn btn-yellow btn-xl" id="btn-start">▶ Comenzar partida</button>
+        <p class="start-note" id="start-note" role="status"></p>
+      </div>
+    </section>
+
+    <!-- ================= PANTALLA DE JUEGO ================= -->
+    <section id="screen-game" class="screen" hidden aria-label="Partida">
+      <article class="stage" id="stage">
+        <div class="stage-top">
+          <div class="qcount" id="qcount"></div>
+          <span class="chip" id="chip-cat"></span>
+          <span class="chip" id="chip-dif"></span>
+          <span class="chip pts" id="chip-pts"></span>
+          <div class="timer" id="timer" hidden>
+            <div class="ring" id="ring" role="timer" aria-label="Tiempo restante"><span id="ring-num"></span></div>
+            <button type="button" class="icon-btn" id="t-toggle" aria-label="Iniciar temporizador">▶</button>
+            <button type="button" class="icon-btn" id="t-reset" aria-label="Reiniciar temporizador">↺</button>
+          </div>
+        </div>
+        <ol class="mini-score" id="mini-score" aria-label="Marcador resumido"></ol>
+        <p class="sr-only" id="q-live" aria-live="polite"></p>
+
+        <div class="stage-body" id="stage-body">
+          <!-- Puerta de la pregunta de apuesta -->
+          <div class="bet-gate" id="bet-gate" hidden></div>
+          <!-- Pregunta -->
+          <div id="q-wrap" style="display:flex;flex-direction:column;gap:.8rem">
+            <h2 class="prompt" id="q-prompt"></h2>
+            <div class="illus" id="q-illus" hidden></div>
+            <p class="how" id="q-how"></p>
+            <div class="activity" id="activity"></div>
+            <div class="reveal hint" id="hint" hidden></div>
+            <div class="reveal solution" id="solution" hidden></div>
+          </div>
+        </div>
+
+        <div class="q-actions" id="q-actions">
+          <button type="button" class="btn btn-green" id="btn-check">✔ Comprobar</button>
+          <button type="button" class="btn btn-ghost" id="btn-retry">↻ Reintentar</button>
+          <div class="feedback-slot"><div class="feedback" id="feedback" role="status" hidden></div></div>
+          <button type="button" class="btn btn-yellow" id="btn-hint" aria-expanded="false" aria-controls="hint">💡 Mostrar pista</button>
+          <button type="button" class="btn btn-pink" id="btn-sol" aria-expanded="false" aria-controls="solution">🔓 Mostrar solución</button>
+        </div>
+
+        <nav class="stage-nav" aria-label="Navegación entre preguntas">
+          <button type="button" class="btn btn-light" id="btn-prev">◀ Anterior</button>
+          <ol class="dots" id="dots"></ol>
+          <button type="button" class="btn btn-yellow" id="btn-next">Siguiente ▶</button>
+        </nav>
+      </article>
+
+      <aside class="modpanel" id="modpanel" aria-label="Panel del moderador"></aside>
+    </section>
+
+    <!-- ================= PANTALLA FINAL ================= -->
+    <section id="screen-final" class="screen" hidden aria-labelledby="final-title">
+      <h2 class="final-title" id="final-title">🏆 Clasificación final</h2>
+      <p class="winner" id="winner" role="status"></p>
+      <div class="podium" id="podium" aria-label="Podio"></div>
+      <ol class="final-list" id="final-list"></ol>
+      <div class="final-actions">
+        <button type="button" class="btn btn-cyan" id="btn-review">📋 Revisar todas las preguntas</button>
+        <button type="button" class="btn btn-yellow" id="btn-csv">⬇ Descargar resultados (CSV)</button>
+        <button type="button" class="btn btn-light" id="btn-print">🖨 Imprimir resultados</button>
+        <button type="button" class="btn btn-red" id="btn-restart">🔄 Reiniciar partida</button>
+      </div>
+      <div class="jump">
+        <h3>Volver a una pregunta concreta</h3>
+        <div class="jump-grid" id="jump-grid"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+<div id="modal-root"></div>
+<section id="print-area"></section>
+<noscript><p style="padding:2rem;font-size:1.5rem">Este juego necesita JavaScript para funcionar.</p></noscript>
+
+<script>
+(() => {
+'use strict';
+
+/* ==========================================================================
+   1. UTILIDADES
+   ========================================================================== */
+const STORAGE_KEY = 'granRetoDecimalesFracciones.v1';
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const plural = n => `${fmtNum(n)} ${Math.abs(n) === 1 ? 'punto' : 'puntos'}`;
+const fmtNum = n => String(n).replace('-', '−');
+const signed = n => (n > 0 ? '+' : '') + fmtNum(n);
+
+/** Dibuja una fracción en vertical. */
+function fracHTML(n, d) {
+  const plain = /^\d+$/.test(n) && /^\d+$/.test(d);
+  const aria = plain ? ` role="img" aria-label="${n} partido por ${d}"` : '';
+  return `<span class="frac"${aria}><span class="fn">${n}</span><span class="fd">${d}</span></span>`;
+}
+/** Convierte el marcado {3/4} de los textos en fracciones verticales. */
+function fmt(s) {
+  return String(s).replace(/\{([^{}\/]+)\/([^{}\/]+)\}/g, (_, n, d) => fracHTML(n, d));
+}
+
+/* ==========================================================================
+   2. LAS 20 PREGUNTAS
+   Cada pregunta define: enunciado (prompt), categoría, dificultad, tipo de
+   interacción, datos, respuesta correcta, pista, solución paso a paso y
+   puntuación sugerida. Las fracciones se escriben {numerador/denominador}.
+   ========================================================================== */
+const DIF = { facil: 'Fácil', media: 'Intermedia', reto: 'Reto' };
+
+const ILLUS = {
+  clase: () => `<div class="class-grid" role="img" aria-label="30 estudiantes">${'<span>🧑‍🎓</span>'.repeat(30)}</div><div class="big" aria-hidden="true">🚲</div>`,
+  zapatillas: () => `<div class="big" aria-hidden="true">👟</div><div class="price-tag">48 €</div><div class="sale" role="img" aria-label="25 por ciento de descuento">−25 %</div>`,
+  receta: () => `<div class="big" aria-hidden="true">🥣</div><div class="recipe">
+      <span>4 personas</span><span aria-hidden="true">👤👤👤👤</span><span>→ ${fracHTML('3','4')} kg de harina</span>
+      <span>6 personas</span><span aria-hidden="true">👤👤👤👤👤👤</span><span>→ <span class="q">¿?</span> kg de harina</span></div>`,
+  ruta: () => `<div class="route"><div class="route-ends" aria-hidden="true"><span>🚶‍♀️</span><span>🏁</span></div>
+      <div class="route-bar" role="img" aria-label="Esquema de la ruta: dos quintos por la mañana, un tercio por la tarde y faltan 4 kilómetros">
+      <div class="am">☀️ mañana ${fracHTML('2','5')}</div><div class="pm">🌙 tarde ${fracHTML('1','3')}</div><div class="left">faltan 4 km</div></div></div>`
+};
+
+const QUESTIONS = [
+  { // 1
+    category: 'Suma y resta con decimales', difficulty: 'facil', type: 'mc', points: 1,
+    prompt: '¿Cuánto es 3,75 + 2,48?',
+    data: { options: ['5,23', '6,23', '6,13', '62,3'] }, answer: 1, answerText: '6,23',
+    hint: 'Coloca los números en columna, con las comas alineadas, y no olvides las llevadas.',
+    steps: ['Alineamos las comas: 3,75 + 2,48.', 'Centésimas: 5 + 8 = 13. Escribo 3 y me llevo 1.', 'Décimas: 7 + 4 + 1 = 12. Escribo 2 y me llevo 1.', 'Unidades: 3 + 2 + 1 = 6.', 'Resultado: 6,23.']
+  },
+  { // 2
+    category: 'Comparar y ordenar decimales', difficulty: 'facil', type: 'order', points: 1,
+    prompt: 'Ordena estos números de menor a mayor.',
+    data: { items: [{id:'a',label:'0,5'},{id:'b',label:'0,45'},{id:'c',label:'0,405'},{id:'d',label:'0,54'},{id:'e',label:'0,054'}] },
+    answer: ['e','c','b','a','d'], answerText: '0,054 &lt; 0,405 &lt; 0,45 &lt; 0,5 &lt; 0,54',
+    hint: 'Añade ceros a la derecha hasta que todos tengan tres cifras decimales. Después compáralos como si fueran números enteros.',
+    steps: ['Igualamos las cifras decimales: 0,500 · 0,450 · 0,405 · 0,540 · 0,054.', 'Comparamos la parte decimal como números enteros: 54 &lt; 405 &lt; 450 &lt; 500 &lt; 540.', 'Orden: 0,054 &lt; 0,405 &lt; 0,45 &lt; 0,5 &lt; 0,54.']
+  },
+  { // 3
+    category: 'Fracciones equivalentes', difficulty: 'facil', type: 'shade', points: 1,
+    prompt: 'Colorea {3/4} de la tableta de chocolate. 🍫',
+    data: { rows: 3, cols: 4 }, answer: 9, answerText: '9 onzas coloreadas, porque {3/4} = {9/12}',
+    hint: 'La tableta tiene 12 onzas. Divide entre el denominador para saber cuántas onzas hay en cada cuarto.',
+    steps: ['La tableta tiene 3 × 4 = 12 onzas.', 'Un cuarto de la tableta son 12 : 4 = 3 onzas.', 'Tres cuartos son 3 × 3 = 9 onzas.', 'Por eso {3/4} y {9/12} son fracciones equivalentes.']
+  },
+  { // 4
+    category: 'Redondeo y aproximaciones', difficulty: 'facil', type: 'tf', points: 1,
+    prompt: '¿Verdadero o falso?',
+    data: { statement: 'Al redondear 3,649 a las décimas se obtiene 3,7.' }, answer: false, answerText: 'Falso: se obtiene 3,6',
+    hint: 'Para redondear a las décimas solo se mira una cifra: la de las centésimas.',
+    steps: ['La cifra de las décimas es 6.', 'Miramos la cifra siguiente, la de las centésimas: es 4.', 'Como 4 es menor que 5, la décima no cambia: 3,649 ≈ 3,6.', 'Error típico: redondear primero a 3,65 y después a 3,7. Nunca se redondea dos veces.']
+  },
+  { // 5
+    category: 'Conversión entre fracciones y decimales', difficulty: 'facil', type: 'match', points: 1,
+    prompt: 'Lleva cada fracción hasta su número decimal equivalente.',
+    data: {
+      cards: [{id:'f1',label:'{1/2}'},{id:'f2',label:'{1/4}'},{id:'f3',label:'{3/4}'},{id:'f4',label:'{1/5}'},{id:'f5',label:'{2/5}'}],
+      targets: [{id:'t1',label:'0,4'},{id:'t2',label:'0,25'},{id:'t3',label:'0,5'},{id:'t4',label:'0,75'},{id:'t5',label:'0,2'}]
+    },
+    answer: { f1:'t3', f2:'t2', f3:'t4', f4:'t5', f5:'t1' },
+    answerText: '{1/2} = 0,5 · {1/4} = 0,25 · {3/4} = 0,75 · {1/5} = 0,2 · {2/5} = 0,4',
+    hint: 'Una fracción es una división: divide el numerador entre el denominador.',
+    steps: ['{1/2} → 1 : 2 = 0,5', '{1/4} → 1 : 4 = 0,25', '{3/4} → 3 : 4 = 0,75', '{1/5} → 1 : 5 = 0,2', '{2/5} → 2 : 5 = 0,4']
+  },
+  { // 6
+    category: 'Multiplicación y división con decimales', difficulty: 'media', type: 'mc', points: 2,
+    prompt: '¿Cuánto es 4,5 : 0,15?',
+    data: { options: ['3', '300', '30', '0,3'] }, answer: 2, answerText: '30',
+    hint: 'Multiplica el dividendo y el divisor por 100 para que el divisor no tenga decimales.',
+    steps: ['Multiplicamos los dos números por 100: 4,5 : 0,15 = 450 : 15.', '450 : 15 = 30.', 'Comprobación: 0,15 × 30 = 4,5. ✔']
+  },
+  { // 7
+    category: 'Simplificación de fracciones', difficulty: 'facil', type: 'fill', points: 1,
+    prompt: 'Simplifica la fracción hasta que sea irreducible.',
+    data: { lines: [{ tpl: '{18/24} = {[[a]]/[[b]]}' }] }, answer: { a: 3, b: 4 }, answerText: '{18/24} = {3/4}',
+    hint: 'Busca el mayor número que divide a la vez a 18 y a 24.',
+    steps: ['El máximo común divisor de 18 y 24 es 6.', 'Dividimos numerador y denominador entre 6: 18 : 6 = 3 y 24 : 6 = 4.', 'La fracción irreducible es {3/4}.']
+  },
+  { // 8
+    category: 'Comparación y ordenación de fracciones', difficulty: 'media', type: 'classify', points: 2,
+    prompt: 'Clasifica cada número: ¿es menor, igual o mayor que 1?',
+    data: {
+      columns: [{id:'lt',label:'Menor que 1'},{id:'eq',label:'Igual a 1'},{id:'gt',label:'Mayor que 1'}],
+      cards: [{id:'c1',label:'{7/8}'},{id:'c2',label:'{5/5}'},{id:'c3',label:'{9/4}'},{id:'c4',label:'0,99'},{id:'c5',label:'{12/12}'},{id:'c6',label:'1,01'},{id:'c7',label:'{4/9}'},{id:'c8',label:'{3/2}'}]
+    },
+    answer: { c1:'lt', c2:'eq', c3:'gt', c4:'lt', c5:'eq', c6:'gt', c7:'lt', c8:'gt' },
+    answerText: 'Menores que 1: {7/8}, 0,99 y {4/9} · Iguales a 1: {5/5} y {12/12} · Mayores que 1: {9/4}, 1,01 y {3/2}',
+    hint: 'En una fracción, compara el numerador con el denominador.',
+    steps: ['Si el numerador es menor que el denominador, la fracción es menor que 1: {7/8} y {4/9}.', 'Si numerador y denominador son iguales, la fracción vale 1: {5/5} y {12/12}.', 'Si el numerador es mayor que el denominador, la fracción es mayor que 1: {9/4} y {3/2}.', 'Decimales: 0,99 no llega a 1 y 1,01 lo supera.']
+  },
+  { // 9
+    category: 'Fracción de una cantidad', difficulty: 'media', type: 'mc', points: 2,
+    prompt: 'En una clase de 30 estudiantes, {2/5} van al instituto en bicicleta. ¿Cuántos estudiantes van en bici?',
+    illus: 'clase',
+    data: { options: ['15', '6', '12', '18'] }, answer: 2, answerText: '12 estudiantes',
+    hint: 'Reparte la clase en 5 grupos iguales y quédate con 2 de ellos.',
+    steps: ['Dividimos entre el denominador: 30 : 5 = 6 estudiantes en cada quinto.', 'Multiplicamos por el numerador: 6 × 2 = 12.', '{2/5} de 30 = 12 estudiantes.']
+  },
+  { // 10
+    category: 'Fracciones equivalentes', difficulty: 'media', type: 'pairs', points: 2,
+    prompt: 'Une cada fracción con su fracción equivalente.',
+    data: {
+      left:  [{id:'l1',label:'{2/3}'},{id:'l2',label:'{3/5}'},{id:'l3',label:'{1/4}'},{id:'l4',label:'{5/6}'}],
+      right: [{id:'r1',label:'{5/20}'},{id:'r2',label:'{15/18}'},{id:'r3',label:'{8/12}'},{id:'r4',label:'{9/15}'}]
+    },
+    answer: { l1:'r3', l2:'r4', l3:'r1', l4:'r2' },
+    answerText: '{2/3} = {8/12} · {3/5} = {9/15} · {1/4} = {5/20} · {5/6} = {15/18}',
+    hint: 'Simplifica las fracciones de la derecha, o multiplica el numerador y el denominador de las de la izquierda por un mismo número.',
+    steps: ['{8/12}: dividimos entre 4 → {2/3}.', '{9/15}: dividimos entre 3 → {3/5}.', '{5/20}: dividimos entre 5 → {1/4}.', '{15/18}: dividimos entre 3 → {5/6}.']
+  },
+  { // 11
+    category: 'Conversión entre fracciones y decimales', difficulty: 'media', type: 'numberline', points: 2,
+    prompt: 'Coloca cada tarjeta en su lugar de la recta numérica. ¡Atención: sobra un hueco!',
+    data: {
+      min: 0, max: 2,
+      ticks: [{v:0,label:'0'},{v:0.25,slot:'s025'},{v:0.5,slot:'s050'},{v:0.75,slot:'s075'},{v:1,label:'1'},{v:1.25,slot:'s125'},{v:1.5,slot:'s150'},{v:1.75,slot:'s175'},{v:2,label:'2'}],
+      cards: [{id:'n1',label:'{3/4}'},{id:'n2',label:'1,75'},{id:'n3',label:'{1/4}'},{id:'n4',label:'{5/4}'},{id:'n5',label:'0,5'}]
+    },
+    answer: { n1:'s075', n2:'s175', n3:'s025', n4:'s125', n5:'s050' },
+    answerText: '{1/4} = 0,25 · 0,5 · {3/4} = 0,75 · {5/4} = 1,25 · 1,75 (queda libre el hueco de 1,5)',
+    hint: 'Entre 0 y 1 hay cuatro saltos iguales: cada marca de la recta vale {1/4}, es decir, 0,25.',
+    steps: ['Cada salto de la recta vale 0,25.', '{1/4} = 0,25 → primera marca.', '0,5 → segunda marca, la mitad entre 0 y 1.', '{3/4} = 0,75 → tercera marca.', '{5/4} = 1,25 → primera marca después del 1.', '1,75 → última marca antes del 2. El hueco de 1,5 queda vacío.']
+  },
+  { // 12
+    category: 'Suma y resta de fracciones', difficulty: 'media', type: 'fill', points: 2,
+    prompt: 'Completa los números que faltan.',
+    data: { lines: [{ tpl: '{5/9} + {2/9} = {[[a]]/9}' }, { tpl: '{3/4} − {1/6} = {[[b]]/12} − {[[c]]/12} = {[[d]]/12}' }] },
+    answer: { a: 7, b: 9, c: 2, d: 7 },
+    answerText: '{5/9} + {2/9} = {7/9} &nbsp;y&nbsp; {3/4} − {1/6} = {9/12} − {2/12} = {7/12}',
+    hint: 'Con el mismo denominador se suman los numeradores. Con distinto denominador, primero hay que buscar fracciones equivalentes con un denominador común.',
+    steps: ['Mismo denominador: 5 + 2 = 7, así que {5/9} + {2/9} = {7/9}.', 'Distinto denominador: m.c.m.(4, 6) = 12.', '{3/4} = {9/12} (multiplicamos por 3) y {1/6} = {2/12} (multiplicamos por 2).', '{9/12} − {2/12} = {7/12}.']
+  },
+  { // 13
+    category: 'Problemas con dinero y descuentos', difficulty: 'media', type: 'mc', points: 2,
+    prompt: 'Unas zapatillas cuestan 48 €. Hoy tienen un 25 % de descuento. ¿Cuánto pagarás por ellas?',
+    illus: 'zapatillas',
+    data: { options: ['12 €', '36 €', '23 €', '38,40 €'] }, answer: 1, answerText: '36 €',
+    hint: 'El 25 % es lo mismo que {1/4}. Calcula primero cuánto dinero te descuentan.',
+    steps: ['El 25 % equivale a {1/4}.', 'Descuento: 48 : 4 = 12 €.', 'Precio final: 48 − 12 = 36 €.', 'Otra forma: pagas el 75 %, y 48 × 0,75 = 36 €.']
+  },
+  { // 14
+    category: 'Detección y corrección de errores', difficulty: 'media', type: 'errorstep', points: 2,
+    prompt: 'El robot Calculín 🤖 ha sumado {2/3} + {1/4}, pero se ha equivocado. ¿En qué paso aparece el primer error?',
+    data: { steps: ['Busco un denominador común: m.c.m.(3, 4) = 12', '{2/3} = {8/12}', '{1/4} = {4/12}', '{8/12} + {4/12} = {12/12} = 1'] },
+    answer: 2, answerText: 'El error está en el paso 3: {1/4} = {3/12}. El resultado correcto es {11/12}',
+    hint: 'Revisa cada fracción equivalente: hay que multiplicar el numerador y el denominador por el mismo número.',
+    steps: ['Paso 1 correcto: m.c.m.(3, 4) = 12.', 'Paso 2 correcto: {2/3} = {8/12}, porque multiplicamos arriba y abajo por 4.', 'Paso 3 incorrecto: para pasar de 4 a 12 se multiplica por 3, así que {1/4} = {3/12}, no {4/12}.', 'Suma corregida: {8/12} + {3/12} = {11/12}.']
+  },
+  { // 15
+    category: 'Estimación y cálculo mental', difficulty: 'media', type: 'tf', points: 2,
+    prompt: 'Sin hacer la cuenta exacta: ¿verdadero o falso?',
+    data: { statement: '49,7 × 0,48 es mayor que 25.' }, answer: false, answerText: 'Falso: el resultado es algo menor que 25',
+    hint: 'Redondea: 49,7 es casi 50 y 0,48 es casi 0,5, que es lo mismo que calcular la mitad.',
+    steps: ['Estimamos: 50 × 0,5 = 25.', 'Pero 49,7 es menor que 50 y 0,48 es menor que 0,5.', 'Si los dos factores son más pequeños, el producto es menor que 25.', 'Cálculo exacto: 49,7 × 0,48 = 23,856.']
+  },
+  { // 16
+    category: 'Multiplicación y división de fracciones', difficulty: 'reto', type: 'fill', points: 3,
+    prompt: 'Calcula y escribe cada resultado como fracción irreducible.',
+    data: { lines: [{ tpl: '{3/5} × {10/9} = {[[a]]/[[b]]}' }, { tpl: '{2/3} : {4/9} = {[[c]]/[[d]]}' }] },
+    answer: { a: 2, b: 3, c: 3, d: 2 },
+    answerText: '{3/5} × {10/9} = {2/3} &nbsp;y&nbsp; {2/3} : {4/9} = {3/2}',
+    hint: 'Para multiplicar: numerador por numerador y denominador por denominador. Para dividir: multiplica por la fracción inversa. ¡Y no olvides simplificar!',
+    steps: ['{3/5} × {10/9} = {30/45}.', 'Simplificamos dividiendo entre 15: {30/45} = {2/3}.', '{2/3} : {4/9} = {2/3} × {9/4} = {18/12}.', 'Simplificamos dividiendo entre 6: {18/12} = {3/2}.']
+  },
+  { // 17
+    category: 'Problemas de recetas y cantidades', difficulty: 'reto', type: 'mc', points: 3,
+    prompt: 'Una receta de bizcocho para 4 personas lleva {3/4} kg de harina. ¿Cuánta harina se necesita para 6 personas?',
+    illus: 'receta',
+    data: { options: ['{5/4} kg', '{3/2} kg', '{11/4} kg', '{9/8} kg'] }, answer: 3, answerText: '{9/8} kg (1,125 kg)',
+    hint: 'Calcula primero la harina para 1 persona. O piensa que 6 personas son una vez y media 4 personas.',
+    steps: ['Harina para 1 persona: {3/4} : 4 = {3/16} kg.', 'Harina para 6 personas: {3/16} × 6 = {18/16} kg.', 'Simplificamos: {18/16} = {9/8} kg.', 'En decimal: 9 : 8 = 1,125 kg.']
+  },
+  { // 18 — PREGUNTA DE APUESTA
+    category: 'Comparación y ordenación de fracciones', difficulty: 'reto', type: 'order', points: 3, bet: true,
+    prompt: 'Ordena estos números de menor a mayor.',
+    data: { items: [{id:'o1',label:'{3/5}'},{id:'o2',label:'0,58'},{id:'o3',label:'{2/3}'},{id:'o4',label:'{5/8}'},{id:'o5',label:'{7/12}'}] },
+    answer: ['o2','o5','o1','o4','o3'], answerText: '0,58 &lt; {7/12} &lt; {3/5} &lt; {5/8} &lt; {2/3}',
+    hint: 'Convierte todas las fracciones en decimales dividiendo el numerador entre el denominador.',
+    steps: ['{3/5} = 0,6', '{2/3} = 0,666…', '{5/8} = 0,625', '{7/12} = 0,5833…', 'Ordenamos los decimales: 0,58 &lt; 0,5833… &lt; 0,6 &lt; 0,625 &lt; 0,666…', 'Orden final: 0,58 &lt; {7/12} &lt; {3/5} &lt; {5/8} &lt; {2/3}.']
+  },
+  { // 19
+    category: 'Problemas de distancias, medidas o tiempos', difficulty: 'reto', type: 'fill', points: 3,
+    prompt: 'Lucía hace una ruta de senderismo. Por la mañana recorre {2/5} del camino y por la tarde {1/3}. Todavía le faltan 4 km. ¿Cuántos kilómetros mide la ruta completa?',
+    illus: 'ruta',
+    data: { lines: [{ tpl: 'La ruta mide [[a]] km' }], wide: true }, answer: { a: 15 }, answerText: '15 km',
+    hint: 'Suma las dos fracciones que ya ha recorrido. ¿Qué fracción del camino falta? Esa fracción son los 4 km.',
+    steps: ['Ya ha recorrido {2/5} + {1/3} = {6/15} + {5/15} = {11/15} del camino.', 'Le falta 1 − {11/15} = {4/15} del camino.', 'Si {4/15} del camino son 4 km, entonces {1/15} es 1 km.', 'La ruta completa mide 15 × 1 = 15 km.', 'Comprobación: 6 km por la mañana + 5 km por la tarde + 4 km = 15 km. ✔']
+  },
+  { // 20 — PREGUNTA FINAL (hasta 3 puntos)
+    category: 'Gran final: decimales y fracciones', difficulty: 'reto', type: 'fill', points: 3, final: true,
+    prompt: '¡Gran final! Tres mini-retos. Cada uno vale 1 punto.',
+    data: {
+      lines: [
+        { label: '1', tpl: 'Escribe 0,75 como fracción irreducible: {[[a]]/[[b]]}' },
+        { label: '2', tpl: '{2/3} de 45 = [[c]]' },
+        { label: '3', tpl: '1,2 − {3/4} = [[d]]' }
+      ],
+      parts: [['a','b'], ['c'], ['d']], wide: true
+    },
+    answer: { a: 3, b: 4, c: 30, d: 0.45 },
+    answerText: '① {3/4} &nbsp;·&nbsp; ② 30 &nbsp;·&nbsp; ③ 0,45',
+    hint: 'En el tercero, pasa primero la fracción a decimal y coloca bien las comas para restar.',
+    steps: ['Mini-reto 1: 0,75 = {75/100}. Dividimos entre 25 y queda {3/4}.', 'Mini-reto 2: 45 : 3 = 15 y 15 × 2 = 30.', 'Mini-reto 3: {3/4} = 0,75, y 1,20 − 0,75 = 0,45.']
+  }
+];
+const TOTAL = QUESTIONS.length;
+
+/* ==========================================================================
+   3. ESTADO Y GUARDADO LOCAL
+   ========================================================================== */
+const defaultState = () => ({
+  v: 1, screen: 'setup', started: false, finished: false,
+  players: [], nextId: 1, current: 0, timer: 0, sound: false,
+  history: [], bet: null, betRevealed: false, panelHidden: false
+});
+let state = defaultState();
+let ui = {};               // estado de las actividades (no se guarda)
+let selectedPlayer = null; // participante elegido en el panel
+let customVal = '';        // valor del campo de puntos personalizado
+let betChoice = 3;
+
+function save() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* almacenamiento no disponible */ }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || typeof s !== 'object' || !Array.isArray(s.players)) return false;
+    const d = defaultState();
+    state = Object.assign(d, s);
+    state.players = s.players.filter(p => p && typeof p.name === 'string').map(p => ({ id: Number(p.id), name: p.name.slice(0, 24), score: Number(p.score) || 0 }));
+    state.history = Array.isArray(s.history) ? s.history.slice(-300) : [];
+    state.current = Math.min(Math.max(0, Number(s.current) || 0), TOTAL - 1);
+    state.timer = [0, 30, 45, 60, 90].includes(Number(s.timer)) ? Number(s.timer) : 0;
+    state.nextId = Math.max(Number(s.nextId) || 1, ...state.players.map(p => p.id + 1), 1);
+    if (!['setup', 'game', 'final'].includes(state.screen)) state.screen = 'setup';
+    if (state.screen !== 'setup' && state.players.length < 2) state.screen = 'setup';
+    return true;
+  } catch (e) { return false; }
+}
+function ranked() {
+  const s = [...state.players].sort((a, b) => b.score - a.score || a.id - b.id);
+  let rank = 0, prev = null;
+  return s.map((p, i) => { if (p.score !== prev) { rank = i + 1; prev = p.score; } return Object.assign({}, p, { rank }); });
+}
+
+/* ==========================================================================
+   4. AVISOS, MODALES, SONIDO Y CONFETI
+   ========================================================================== */
+function toast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/** Ventana modal accesible. Devuelve una promesa con el valor del botón pulsado (o null). */
+function modal({ title, html, buttons, wide = false }) {
+  return new Promise(resolve => {
+    const prev = document.activeElement;
+    const root = $('#modal-root');
+    const wrap = document.createElement('div');
+    wrap.className = 'modal-backdrop';
+    wrap.innerHTML = `<div class="modal${wide ? ' wide' : ''}" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h2 id="modal-title">${title}</h2><div class="modal-body">${html}</div>
+      <div class="modal-actions">${buttons.map((b, i) => `<button type="button" class="btn ${b.cls || 'btn-light'}" data-val="${i}">${b.label}</button>`).join('')}</div></div>`;
+    root.appendChild(wrap);
+    $('#app').inert = true;
+    const valueOf = b => (typeof b.value === 'function' ? b.value(wrap) : b.value);
+    const close = v => {
+      document.removeEventListener('keydown', onKey, true);
+      wrap.remove();
+      if (!root.children.length) $('#app').inert = false;
+      if (prev && prev.isConnected && prev.focus) prev.focus();
+      resolve(v === undefined ? null : v);
+    };
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); close(null); return; }
+      if (e.key !== 'Tab') return;
+      const f = $$('button,input,select,[tabindex="0"]', wrap).filter(el => !el.disabled);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (!wrap.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+    }
+    document.addEventListener('keydown', onKey, true);
+    wrap.addEventListener('click', e => {
+      if (e.target === wrap) return close(null);
+      const j = e.target.closest('[data-close-with]');
+      if (j) return close(j.dataset.closeWith);
+      const b = e.target.closest('.modal-actions [data-val]');
+      if (b) close(valueOf(buttons[+b.dataset.val]));
+    });
+    const form = $('form', wrap);
+    if (form) form.addEventListener('submit', e => { e.preventDefault(); close(valueOf(buttons.find(b => b.primary))); });
+    const target = $('input', wrap) || $$('.modal-actions .btn', wrap).pop();
+    if (target) { target.focus(); if (target.select) target.select(); }
+  });
+}
+const confirmModal = (title, text, label, cls = 'btn-red') =>
+  modal({ title, html: `<p>${text}</p>`, buttons: [{ label: 'Cancelar', value: false }, { label, cls, value: true }] }).then(Boolean);
+function promptModal({ title, label, value = '', type = 'text', okLabel = 'Guardar' }) {
+  const attrs = type === 'number' ? 'type="number" step="1" inputmode="numeric"' : 'type="text" maxlength="24"';
+  return modal({
+    title,
+    html: `<form><label for="modal-input">${label}</label><input class="field" id="modal-input" ${attrs} value="${esc(value)}" autocomplete="off"></form>`,
+    buttons: [{ label: 'Cancelar', value: null }, { label: okLabel, cls: 'btn-violet', primary: true, value: w => $('#modal-input', w).value }]
+  });
+}
+
+/* ---------- Efectos de sonido (solo si el moderador los activa) ---------- */
+const Sound = {
+  ctx: null,
+  tone(freq, start, dur, type = 'triangle', vol = 0.14) {
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    const t0 = this.ctx.currentTime + start;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(this.ctx.destination);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  },
+  play(name) {
+    if (!state.sound) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!this.ctx) this.ctx = new AC();
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+      const seq = {
+        ok: [[523, 0], [659, .1], [784, .2]], bad: [[220, 0], [165, .16]], point: [[660, 0], [880, .09]],
+        minus: [[330, 0], [247, .12]], tick: [[1000, 0]], time: [[440, 0], [440, .22], [330, .44]],
+        win: [[523, 0], [659, .14], [784, .28], [1047, .42], [784, .6], [1047, .74]], click: [[700, 0]]
+      }[name] || [];
+      seq.forEach(([f, t]) => this.tone(f, t, name === 'tick' || name === 'click' ? 0.06 : 0.22, name === 'bad' || name === 'time' ? 'sawtooth' : 'triangle'));
+    } catch (e) { /* sin audio */ }
+  }
+};
+
+/* ---------- Confeti dibujado en un <canvas> ---------- */
+const Confetti = (() => {
+  const canvas = $('#confetti'), ctx = canvas.getContext('2d');
+  const COLORS = ['#ffd23f', '#e8266f', '#27e0e6', '#2fd07a', '#ff9f1c', '#7c4dff', '#ffffff'];
+  let parts = [], raf = 0;
+  function fit() {
+    if (canvas.width !== innerWidth || canvas.height !== innerHeight) { canvas.width = innerWidth; canvas.height = innerHeight; }
+  }
+  function add(x, y, vx, vy) {
+    parts.push({ x, y, vx, vy, s: 7 + Math.random() * 9, r: Math.random() * 6.28, vr: (Math.random() - .5) * .4, c: COLORS[(Math.random() * COLORS.length) | 0], life: 0, max: 110 + Math.random() * 70 });
+  }
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    parts = parts.filter(p => p.life < p.max && p.y < canvas.height + 40);
+    for (const p of parts) {
+      p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r);
+      ctx.globalAlpha = Math.min(1, (p.max - p.life) / 25);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+      ctx.restore();
+    }
+    if (parts.length) raf = requestAnimationFrame(loop); else { raf = 0; ctx.clearRect(0, 0, canvas.width, canvas.height); }
+  }
+  function go() { if (!raf) raf = requestAnimationFrame(loop); }
+  return {
+    /** Explosión desde un punto (x, y en proporción de la pantalla). */
+    burst(n = 120, x = .5, y = .4) {
+      if (reduceMotion()) return; fit();
+      for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = 5 + Math.random() * 13; add(x * canvas.width, y * canvas.height, Math.cos(a) * v, Math.sin(a) * v - 7); }
+      go();
+    },
+    /** Lluvia de confeti desde arriba. */
+    rain(n = 260) {
+      if (reduceMotion()) return; fit();
+      for (let i = 0; i < n; i++) add(Math.random() * canvas.width, -20 - Math.random() * canvas.height * .6, (Math.random() - .5) * 5, 2 + Math.random() * 5);
+      go();
+    }
+  };
+})();
+
+/* ==========================================================================
+   5. ACTIVIDADES INTERACTIVAS
+   Cada tipo define: init (estado inicial), render (dibujar), click (reaccionar),
+   ready (¿está completa?) y check (comprobar; nunca asigna puntos).
+   ========================================================================== */
+const mark = (marks, key) => (marks && key in marks ? (marks[key] ? ' ok' : ' bad') : '');
+const markSR = (marks, key) => (marks && key in marks ? `<span class="sr-only"> (${marks[key] ? 'correcto' : 'incorrecto'})</span>` : '');
+
+/* ---------- Motor común para las actividades de mover tarjetas ---------- */
+const placeModel = q => ({
+  cards: q.type === 'order' ? q.data.items : q.data.cards,
+  cap1: zone => q.type === 'order' || ((q.type === 'match' || q.type === 'numberline') && zone !== 'bank'),
+  hasBank: q.type !== 'order'
+});
+function placeInit(q) {
+  const m = placeModel(q), place = {}, seq = {};
+  m.cards.forEach((c, i) => { place[c.id] = m.hasBank ? 'bank' : 'p' + i; seq[c.id] = i; });
+  return { place, seq, n: m.cards.length, sel: null, marks: null };
+}
+function moveCard(q, a, id, zone) {
+  const from = a.place[id];
+  if (from === zone || !(id in a.place)) return;
+  if (placeModel(q).cap1(zone)) {
+    const occupant = Object.keys(a.place).find(k => a.place[k] === zone);
+    if (occupant) { a.place[occupant] = from; a.seq[occupant] = ++a.n; } // intercambio
+  }
+  a.place[id] = zone; a.seq[id] = ++a.n; a.marks = null;
+}
+function placeClick(q, a, e) {
+  const m = placeModel(q);
+  const cardEl = e.target.closest('[data-card]');
+  const zoneEl = e.target.closest('[data-zone]');
+  if (cardEl) {
+    const id = cardEl.dataset.card;
+    if (a.sel && a.sel !== id) {
+      const z = a.place[id];
+      if (z !== 'bank' && a.place[a.sel] !== z) { const moved = a.sel; moveCard(q, a, moved, z); a.sel = null; return { focus: 'card-' + moved }; }
+      a.sel = id; return true;
+    }
+    a.sel = a.sel === id ? null : id; return true;
+  }
+  if (zoneEl && a.sel) { const moved = a.sel; moveCard(q, a, moved, zoneEl.dataset.zone); a.sel = null; return { focus: 'card-' + moved }; }
+  return false;
+}
+const cardHTML = (c, a) => `<button type="button" class="card${a.sel === c.id ? ' selected' : ''}${mark(a.marks, c.id)}" data-card="${c.id}" data-k="card-${c.id}" aria-pressed="${a.sel === c.id}">${fmt(c.label)}${markSR(a.marks, c.id)}</button>`;
+const cardsIn = (q, a, zone) => placeModel(q).cards.filter(c => a.place[c.id] === zone).sort((x, y) => a.seq[x.id] - a.seq[y.id]);
+function bankHTML(q, a) {
+  const cs = cardsIn(q, a, 'bank');
+  const ret = a.sel && a.place[a.sel] !== 'bank' ? `<button type="button" class="bank-return" data-k="zone-bank">↩ Devolver aquí</button>` : '';
+  return `<div class="bank" data-zone="bank" aria-label="Bandeja de tarjetas">${cs.map(c => cardHTML(c, a)).join('')}${!cs.length && !ret ? '<span class="bank-empty">Bandeja vacía</span>' : ''}${ret}</div>`;
+}
+function placeCheck(q, a) {
+  const ans = Array.isArray(q.answer) ? Object.fromEntries(q.answer.map((id, i) => [id, 'p' + i])) : q.answer;
+  const marks = {};
+  Object.keys(ans).forEach(id => { marks[id] = a.place[id] === ans[id]; });
+  return { ok: Object.values(marks).every(Boolean), marks };
+}
+const placeReady = (q, a) => Object.values(a.place).every(z => z !== 'bank');
+const HOW_DRAG = 'Arrastra las tarjetas, o toca una tarjeta y después su destino.';
+
+/* ---------- Elección de una opción (múltiple, V/F, paso incorrecto) ---------- */
+const choice = {
+  init: () => ({ sel: null, marks: null }),
+  click(q, a, e) { const b = e.target.closest('[data-opt]'); if (!b) return false; a.sel = +b.dataset.opt; a.marks = null; return true; },
+  ready: (q, a) => a.sel !== null,
+  notReady: 'Elige primero una respuesta.'
+};
+
+const ACT = {
+  mc: Object.assign({}, choice, {
+    how: 'Toca la opción elegida y pulsa «Comprobar».',
+    render(q, a, host) {
+      host.innerHTML = `<div class="mc-grid" role="group" aria-label="Opciones de respuesta">${q.data.options.map((o, i) =>
+        `<button type="button" class="opt opt-${i}${a.sel === i ? ' selected' : ''}${mark(a.marks, i)}" data-opt="${i}" data-k="opt-${i}" aria-pressed="${a.sel === i}"><span class="opt-letter" aria-hidden="true">${'ABCD'[i]}</span><span>${fmt(o)}${markSR(a.marks, i)}</span></button>`).join('')}</div>`;
+    },
+    check: (q, a) => ({ ok: a.sel === q.answer, marks: { [a.sel]: a.sel === q.answer } })
+  }),
+
+  tf: Object.assign({}, choice, {
+    how: 'Elige «Verdadero» o «Falso» y pulsa «Comprobar».',
+    render(q, a, host) {
+      host.innerHTML = `<p class="statement">${fmt(q.data.statement)}</p><div class="mc-grid tf" role="group" aria-label="Verdadero o falso">${['👍 Verdadero', '👎 Falso'].map((o, i) =>
+        `<button type="button" class="opt${a.sel === i ? ' selected' : ''}${mark(a.marks, i)}" data-opt="${i}" data-k="opt-${i}" aria-pressed="${a.sel === i}"><span>${o}${markSR(a.marks, i)}</span></button>`).join('')}</div>`;
+    },
+    check(q, a) { const ok = (a.sel === 0) === q.answer; return { ok, marks: { [a.sel]: ok } }; }
+  }),
+
+  errorstep: Object.assign({}, choice, {
+    how: 'Toca el paso que crees que está mal y pulsa «Comprobar».',
+    render(q, a, host) {
+      host.innerHTML = `<div class="steps" role="group" aria-label="Pasos de la operación">${q.data.steps.map((s, i) =>
+        `<button type="button" class="step${a.sel === i ? ' selected' : ''}${mark(a.marks, i)}" data-opt="${i}" data-k="opt-${i}" aria-pressed="${a.sel === i}"><span class="n">Paso ${i + 1}</span><span>${fmt(s)}${markSR(a.marks, i)}</span></button>`).join('')}</div>`;
+    },
+    check: (q, a) => ({ ok: a.sel === q.answer, marks: { [a.sel]: a.sel === q.answer } })
+  }),
+
+  order: {
+    how: 'Arrastra una tarjeta sobre otra para intercambiarlas, o toca primero una y después la otra.',
+    init: placeInit, click: placeClick, check: placeCheck, ready: () => true,
+    render(q, a, host) {
+      const n = q.data.items.length;
+      host.innerHTML = `<div class="order-row"><span class="order-end">Menor</span>${Array.from({ length: n }, (_, i) => {
+        const c = cardsIn(q, a, 'p' + i)[0];
+        return `<div class="oslot" data-zone="p${i}"><span class="pos">${i + 1}.º</span>${c ? cardHTML(c, a) : ''}</div>`;
+      }).join('')}<span class="order-end">Mayor</span></div>`;
+    }
+  },
+
+  match: {
+    how: HOW_DRAG, init: placeInit, click: placeClick, check: placeCheck, ready: placeReady,
+    notReady: 'Coloca todas las tarjetas antes de comprobar.',
+    render(q, a, host) {
+      host.innerHTML = bankHTML(q, a) + `<div class="targets">${q.data.targets.map(t => {
+        const c = cardsIn(q, a, t.id)[0];
+        return `<div class="target" data-zone="${t.id}"><div class="target-label">${fmt(t.label)}</div>${c ? cardHTML(c, a) : `<button type="button" class="slot-empty" data-k="zone-${t.id}" aria-label="Colocar aquí: ${esc(t.label)}">Suelta aquí</button>`}</div>`;
+      }).join('')}</div>`;
+    }
+  },
+
+  classify: {
+    how: HOW_DRAG, init: placeInit, click: placeClick, check: placeCheck, ready: placeReady,
+    notReady: 'Coloca todas las tarjetas antes de comprobar.',
+    render(q, a, host) {
+      host.innerHTML = bankHTML(q, a) + `<div class="cols">${q.data.columns.map(col =>
+        `<div class="col" data-zone="${col.id}"><button type="button" class="col-head" data-k="zone-${col.id}">${col.label}</button><div class="col-body">${cardsIn(q, a, col.id).map(c => cardHTML(c, a)).join('')}</div></div>`).join('')}</div>`;
+    }
+  },
+
+  numberline: {
+    how: HOW_DRAG, init: placeInit, click: placeClick, check: placeCheck, ready: placeReady,
+    notReady: 'Coloca todas las tarjetas en la recta antes de comprobar.',
+    render(q, a, host) {
+      const { min, max, ticks } = q.data;
+      host.innerHTML = bankHTML(q, a) + `<div class="nl-wrap"><div class="nl"><div class="nl-line"></div>${ticks.map((t, i) => {
+        const left = ((t.v - min) / (max - min)) * 100;
+        if (t.label !== undefined) return `<div class="nl-tick major" style="left:${left}%"><span class="nl-mark"></span><span class="nl-label">${t.label}</span></div>`;
+        const c = cardsIn(q, a, t.slot)[0];
+        return `<div class="nl-tick" style="left:${left}%" data-zone="${t.slot}"><span class="nl-mark"></span>${c ? cardHTML(c, a) : `<button type="button" class="slot-empty" data-k="zone-${t.slot}" aria-label="Hueco ${i} de la recta">Hueco</button>`}</div>`;
+      }).join('')}</div></div>`;
+    }
+  },
+
+  shade: {
+    how: 'Toca las onzas para colorearlas o borrarlas.',
+    init: q => ({ on: Array(q.data.rows * q.data.cols).fill(false), marks: null }),
+    render(q, a, host) {
+      const cls = a.marks ? (a.marks.all ? ' ok' : ' bad') : '';
+      host.innerHTML = `<div class="choc${cls}" style="grid-template-columns:repeat(${q.data.cols},1fr)" role="group" aria-label="Tableta de ${a.on.length} onzas">${a.on.map((v, i) =>
+        `<button type="button" class="cell" data-cell="${i}" data-k="cell-${i}" aria-pressed="${v}" aria-label="Onza ${i + 1}"></button>`).join('')}</div>`;
+    },
+    click(q, a, e) { const b = e.target.closest('[data-cell]'); if (!b) return false; a.on[+b.dataset.cell] = !a.on[+b.dataset.cell]; a.marks = null; return true; },
+    ready: (q, a) => a.on.some(Boolean), notReady: 'Colorea alguna onza antes de comprobar.',
+    check(q, a) { const ok = a.on.filter(Boolean).length === q.answer; return { ok, marks: { all: ok } }; }
+  },
+
+  pairs: {
+    how: 'Toca una fracción de la izquierda y después su pareja de la derecha.',
+    COLORS: ['#e8266f', '#0d8fa0', '#c26a00', '#7c4dff', '#2a8f4f'],
+    init: () => ({ links: {}, sel: null, marks: null }),
+    render(q, a, host) {
+      const idx = id => q.data.left.findIndex(l => l.id === id);
+      const leftOf = rid => Object.keys(a.links).find(l => a.links[l] === rid);
+      const item = (it, side) => {
+        const l = side === 'L' ? (it.id in a.links ? it.id : null) : leftOf(it.id);
+        const sel = a.sel && a.sel.side === side && a.sel.id === it.id;
+        const tag = l ? `<span class="tag" style="background:${this.COLORS[idx(l)]}" aria-hidden="true">${idx(l) + 1}</span>` : '';
+        const style = l ? ` style="border-color:${this.COLORS[idx(l)]}"` : '';
+        const m = l ? mark(a.marks, l) : '';
+        return `<button type="button" class="pitem${sel ? ' selected' : ''}${m}" data-side="${side}" data-pid="${it.id}" data-k="p-${it.id}" aria-pressed="${!!sel}"${m || sel ? '' : style}>${tag}${fmt(it.label)}${l ? `<span class="sr-only"> (pareja ${idx(l) + 1})</span>${markSR(a.marks, l)}` : ''}</button>`;
+      };
+      host.innerHTML = `<div class="pairs"><svg aria-hidden="true"></svg><div class="pcol">${q.data.left.map(i => item(i, 'L')).join('')}</div><div class="pcol">${q.data.right.map(i => item(i, 'R')).join('')}</div></div>`;
+    },
+    /** Dibuja las líneas que unen las parejas. */
+    after(q, a, host) {
+      const wrap = $('.pairs', host); if (!wrap) return;
+      const R = wrap.getBoundingClientRect(), svg = $('svg', wrap);
+      svg.setAttribute('viewBox', `0 0 ${R.width} ${R.height}`);
+      svg.innerHTML = Object.entries(a.links).map(([l, r]) => {
+        const A = $(`[data-pid="${l}"]`, wrap).getBoundingClientRect(), B = $(`[data-pid="${r}"]`, wrap).getBoundingClientRect();
+        const i = q.data.left.findIndex(x => x.id === l);
+        const col = a.marks && l in a.marks ? (a.marks[l] ? '#2fd07a' : '#ff5a5f') : this.COLORS[i];
+        const dash = a.marks && a.marks[l] === false ? ' stroke-dasharray="4 18"' : '';
+        return `<line x1="${A.right - R.left}" y1="${A.top + A.height / 2 - R.top}" x2="${B.left - R.left}" y2="${B.top + B.height / 2 - R.top}" stroke="#fff" stroke-width="14" stroke-linecap="round"/><line x1="${A.right - R.left}" y1="${A.top + A.height / 2 - R.top}" x2="${B.left - R.left}" y2="${B.top + B.height / 2 - R.top}" stroke="${col}" stroke-width="8" stroke-linecap="round"${dash}/>`;
+      }).join('');
+    },
+    click(q, a, e) {
+      const b = e.target.closest('[data-pid]'); if (!b) return false;
+      const side = b.dataset.side, id = b.dataset.pid;
+      a.marks = null;
+      if (a.sel && a.sel.side !== side) {
+        const l = side === 'L' ? id : a.sel.id, r = side === 'R' ? id : a.sel.id;
+        Object.keys(a.links).forEach(k => { if (a.links[k] === r) delete a.links[k]; });
+        a.links[l] = r; a.sel = null;
+      } else if (a.sel && a.sel.id === id) a.sel = null;
+      else a.sel = { side, id };
+      return true;
+    },
+    ready: (q, a) => Object.keys(a.links).length === q.data.left.length, notReady: 'Une todas las parejas antes de comprobar.',
+    check(q, a) { const marks = {}; q.data.left.forEach(l => { marks[l.id] = a.links[l.id] === q.answer[l.id]; }); return { ok: Object.values(marks).every(Boolean), marks }; }
+  },
+
+  fill: {
+    how: 'Escribe en los huecos con el teclado o con los botones de números.',
+    init: () => ({ vals: {}, last: null, marks: null }),
+    render(q, a, host) {
+      let n = 0;
+      const lines = q.data.lines.map(line => {
+        const body = fmt(line.tpl).replace(/\[\[(\w+)\]\]/g, (_, id) => {
+          n++;
+          return `<input type="text" class="blank${q.data.wide ? ' wide' : ''}${mark(a.marks, id)}${a.last === id ? ' active' : ''}" data-blank="${id}" data-k="blank-${id}" inputmode="decimal" autocomplete="off" maxlength="6" aria-label="Hueco ${n}${a.marks && id in a.marks ? (a.marks[id] ? ', correcto' : ', incorrecto') : ''}" value="${esc(a.vals[id] || '')}">`;
+        });
+        return `<div class="fill-line">${line.label ? `<span class="lbl" aria-hidden="true">${line.label}</span>` : ''}${body}</div>`;
+      }).join('');
+      host.innerHTML = (q.data.lines.length > 2 ? `<div class="fill-compact">${lines}</div>` : lines) + `<div class="keypad" role="group" aria-label="Teclado numérico en pantalla">${['1','2','3','4','5','6','7','8','9','0',','].map(k => `<button type="button" class="btn btn-light" data-key="${k}" aria-label="${k === ',' ? 'coma' : k}">${k}</button>`).join('')}<button type="button" class="btn btn-ghost" data-key="del" aria-label="Borrar">⌫</button></div>`;
+    },
+    /** Los botones del teclado en pantalla escriben en el último hueco usado. */
+    click(q, a, e, host) {
+      const key = e.target.closest('[data-key]'); if (!key) return false;
+      let input = a.last && $(`[data-blank="${a.last}"]`, host);
+      if (!input) input = $$('[data-blank]', host).find(i => !i.value) || $('[data-blank]', host);
+      if (!input) return false;
+      const k = key.dataset.key;
+      input.value = k === 'del' ? input.value.slice(0, -1) : (input.value + k).slice(0, 6);
+      this.input(q, a, { target: input }, host);
+      this.focusin(q, a, { target: input }, host);
+      return false; // no hace falta redibujar
+    },
+    input(q, a, e, host) {
+      const id = e.target.dataset && e.target.dataset.blank; if (!id) return;
+      a.vals[id] = e.target.value;
+      if (a.marks) { a.marks = null; $$('.blank', host).forEach(i => i.classList.remove('ok', 'bad')); clearFeedback(); }
+    },
+    focusin(q, a, e, host) {
+      const id = e.target.dataset && e.target.dataset.blank; if (!id) return;
+      a.last = id; $$('.blank', host).forEach(i => i.classList.toggle('active', i.dataset.blank === id));
+    },
+    ready: (q, a) => Object.keys(q.answer).every(id => (a.vals[id] || '').trim() !== ''), notReady: 'Rellena todos los huecos antes de comprobar.',
+    check(q, a) {
+      const marks = {};
+      Object.keys(q.answer).forEach(id => {
+        const raw = (a.vals[id] || '').replace(/\s/g, '').replace('.', ',');
+        marks[id] = /^\d*(,\d+)?$/.test(raw) && raw !== '' && Math.abs(parseFloat(raw.replace(',', '.')) - q.answer[id]) < 1e-9;
+      });
+      const res = { ok: Object.values(marks).every(Boolean), marks };
+      if (q.data.parts) { res.partsOk = q.data.parts.filter(p => p.every(id => marks[id])).length; res.partsTotal = q.data.parts.length; }
+      return res;
+    }
+  }
+};
+
+/* ==========================================================================
+   6. PANTALLA INICIAL: PARTICIPANTES Y OPCIONES
+   ========================================================================== */
+function renderSetup() {
+  const list = $('#plist');
+  list.innerHTML = state.players.map(p => `<li data-pid="${p.id}">
+      <span class="pname">${esc(p.name)}</span><span class="pscore" aria-label="${plural(p.score)}">${fmtNum(p.score)} pts</span>
+      <button type="button" class="icon-btn" data-act="edit" aria-label="Editar el nombre de ${esc(p.name)}">✏️</button>
+      <button type="button" class="icon-btn" data-act="del" aria-label="Eliminar a ${esc(p.name)}">🗑</button></li>`).join('');
+  $('#plist-empty').hidden = state.players.length > 0;
+  const enough = state.players.length >= 2;
+  const btn = $('#btn-start');
+  btn.disabled = !enough;
+  btn.textContent = state.started ? '▶ Continuar partida' : '▶ Comenzar partida';
+  $('#start-note').textContent = enough ? `${state.players.length} participantes listos. ¡A jugar!` : `Faltan participantes: añade al menos 2 (hay ${state.players.length}).`;
+  $$('#seg-timer input').forEach(r => { r.checked = Number(r.value) === state.timer; });
+}
+function addPlayer(name) {
+  name = name.trim().replace(/\s+/g, ' ').slice(0, 24);
+  if (!name) { toast('Escribe un nombre para añadirlo.'); return false; }
+  if (state.players.some(p => p.name.toLowerCase() === name.toLowerCase())) { toast(`Ya hay un participante llamado «${name}».`); return false; }
+  state.players.push({ id: state.nextId++, name, score: 0 });
+  save(); renderSetup(); Sound.play('click');
+  return true;
+}
+async function editPlayer(id) {
+  const p = state.players.find(x => x.id === id); if (!p) return;
+  const v = await promptModal({ title: 'Editar participante', label: 'Nombre del participante o equipo', value: p.name });
+  if (v === null) return;
+  const name = v.trim().replace(/\s+/g, ' ').slice(0, 24);
+  if (!name) return toast('El nombre no puede quedar vacío.');
+  if (state.players.some(x => x.id !== id && x.name.toLowerCase() === name.toLowerCase())) return toast(`Ya hay un participante llamado «${name}».`);
+  p.name = name; save(); renderSetup();
+}
+async function deletePlayer(id) {
+  const p = state.players.find(x => x.id === id); if (!p) return;
+  if (state.started && !(await confirmModal('Eliminar participante', `¿Seguro que quieres eliminar a <b>${esc(p.name)}</b>? Tiene ${plural(p.score)}.`, 'Eliminar'))) return;
+  state.players = state.players.filter(x => x.id !== id);
+  if (selectedPlayer === id) selectedPlayer = null;
+  save(); renderSetup();
+}
+function startGame() {
+  if (state.players.length < 2) return toast('Añade al menos 2 participantes para empezar.');
+  state.started = true; state.screen = state.finished ? 'final' : 'game';
+  save(); render(); Sound.play('ok');
+}
+
+/* ==========================================================================
+   7. PANTALLA DE JUEGO: PREGUNTA ACTUAL
+   ========================================================================== */
+const curQ = () => QUESTIONS[state.current];
+function curUI() {
+  const i = state.current;
+  if (!ui[i]) ui[i] = { a: ACT[QUESTIONS[i].type].init(QUESTIONS[i]), hint: false, sol: false, fb: null };
+  return ui[i];
+}
+const suggested = q => (q.bet ? (state.bet || q.points) : q.points);
+
+function clearFeedback() { const u = curUI(); u.fb = null; $('#feedback').hidden = true; }
+function showFeedback(kind, html) {
+  const u = curUI(); u.fb = { kind, html };
+  const f = $('#feedback'); f.className = 'feedback ' + kind; f.innerHTML = html; f.hidden = false;
+}
+function focusKey(key) {
+  if (!key) return;
+  const el = $(`#activity [data-k="${key}"]`);
+  if (el) el.focus({ preventScroll: true });
+}
+function renderActivity() {
+  const q = curQ(), u = curUI(), host = $('#activity'), act = ACT[q.type];
+  act.render(q, u.a, host);
+  if (act.after) act.after(q, u.a, host);
+}
+
+function renderQuestion(dir) {
+  const q = curQ(), u = curUI(), i = state.current;
+  const gated = q.bet && !state.betRevealed;
+
+  $('#qcount').innerHTML = `Pregunta <b>${i + 1}</b> de ${TOTAL}`;
+  $('#chip-cat').textContent = '📚 ' + q.category;
+  const dif = $('#chip-dif'); dif.className = 'chip dif-' + q.difficulty; dif.textContent = DIF[q.difficulty];
+  const pts = $('#chip-pts');
+  pts.className = 'chip pts' + (q.bet || q.final ? ' special' : '');
+  pts.textContent = q.bet ? (gated ? '🎲 Pregunta de apuesta' : `🎲 Apuesta: ${plural(state.bet)}`) : q.final ? '🌟 Final: hasta 3 puntos' : `Vale ${plural(q.points)}`;
+
+  // Puerta de la pregunta de apuesta: el moderador decide el valor antes de verla
+  const gate = $('#bet-gate'), wrap = $('#q-wrap');
+  gate.hidden = !gated; wrap.style.display = gated ? 'none' : 'flex'; $('#q-actions').hidden = gated;
+  if (gated) {
+    gate.innerHTML = `<div class="bet-badge">🎲 ¡Pregunta de apuesta!</div>
+      <p>Antes de verla, el moderador decide cuántos puntos vale.</p>
+      <p>Categoría: <b>${q.category}</b> · Dificultad: <b>${DIF[q.difficulty]}</b></p>
+      <div class="bet-opts" role="group" aria-label="Puntos en juego">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="btn" data-bet="${n}" aria-pressed="${betChoice === n}" aria-label="${n} ${n === 1 ? 'punto' : 'puntos'}">${n}</button>`).join('')}</div>
+      <button type="button" class="btn btn-yellow btn-xl" id="bet-go">Mostrar la pregunta ▶</button>`;
+  } else {
+    $('#q-prompt').innerHTML = fmt(q.prompt);
+    const il = $('#q-illus'); il.hidden = !q.illus; il.innerHTML = q.illus ? ILLUS[q.illus]() : '';
+    $('#q-how').textContent = '👉 ' + ACT[q.type].how;
+    renderActivity();
+    const f = $('#feedback');
+    if (u.fb) { f.className = 'feedback ' + u.fb.kind; f.innerHTML = u.fb.html; f.hidden = false; } else f.hidden = true;
+    renderReveals();
+  }
+
+  // Navegación
+  $('#btn-prev').disabled = i === 0;
+  $('#btn-next').textContent = i === TOTAL - 1 ? 'Terminar 🏁' : 'Siguiente ▶';
+  $('#dots').innerHTML = QUESTIONS.map((x, k) => `<li><button type="button" class="dot${k === i ? ' current' : k < i ? ' past' : ''}${x.bet || x.final ? ' star' : ''}" data-goto="${k}" aria-label="Ir a la pregunta ${k + 1}${x.bet ? ' (apuesta)' : x.final ? ' (final)' : ''}"${k === i ? ' aria-current="step"' : ''}>${k + 1}</button></li>`).join('');
+  $('#q-live').textContent = `Pregunta ${i + 1} de ${TOTAL}. ${q.category}. Dificultad: ${DIF[q.difficulty]}.`;
+
+  if (dir) {
+    const body = $('#stage-body');
+    body.classList.remove('enter-next', 'enter-prev');
+    void body.offsetWidth; // reinicia la animación
+    body.classList.add(dir > 0 ? 'enter-next' : 'enter-prev');
+    body.scrollTop = 0;
+  }
+}
+function renderReveals() {
+  const q = curQ(), u = curUI();
+  const h = $('#hint'), s = $('#solution'), bh = $('#btn-hint'), bs = $('#btn-sol');
+  h.hidden = !u.hint; s.hidden = !u.sol;
+  bh.textContent = u.hint ? '💡 Ocultar pista' : '💡 Mostrar pista'; bh.setAttribute('aria-expanded', u.hint);
+  bs.textContent = u.sol ? '🔒 Ocultar solución' : '🔓 Mostrar solución'; bs.setAttribute('aria-expanded', u.sol);
+  // El texto de la pista y de la solución solo se escribe en la página cuando el moderador lo pide
+  h.innerHTML = u.hint ? `<h3>💡 Pista</h3><p>${fmt(q.hint)}</p>` : '';
+  s.innerHTML = u.sol ? `<h3>✅ Solución</h3><p class="sol-answer">${fmt(q.answerText)}</p><h3>Paso a paso</h3><ol>${q.steps.map(x => `<li>${fmt(x)}</li>`).join('')}</ol>` : '';
+}
+
+/** Comprueba la respuesta en pantalla. Nunca asigna puntos: eso lo decide el moderador. */
+function doCheck() {
+  const q = curQ(), u = curUI(), act = ACT[q.type];
+  if (!act.ready(q, u.a)) { showFeedback('info', 'ℹ️ ' + act.notReady); return; }
+  const res = act.check(q, u.a);
+  u.a.marks = res.marks; if ('sel' in u.a && q.type !== 'mc' && q.type !== 'tf' && q.type !== 'errorstep') u.a.sel = null;
+  renderActivity();
+  if (res.ok) {
+    showFeedback('ok', '✅ ¡Correcto! Ahora decide el moderador.');
+    Sound.play('ok');
+    Confetti.burst(140, .4, .45);
+    if (q.bet || q.final) Confetti.rain(200);
+  } else {
+    const extra = res.partsTotal ? ` Mini-retos correctos: ${res.partsOk} de ${res.partsTotal}.` : ' ¡Probad otra vez!';
+    showFeedback('bad', `❌ Todavía no es correcto.${extra}`);
+    Sound.play('bad');
+  }
+}
+
+function goTo(i) {
+  if (i < 0 || i >= TOTAL || i === state.current) return;
+  const dir = i > state.current ? 1 : -1;
+  state.current = i; selectedPlayer = null; customVal = String(suggested(curQ()));
+  save(); Timer.reset(); renderQuestion(dir); renderPanel();
+}
+function nextQuestion() {
+  if (state.current === TOTAL - 1) { finishGame(); return; }
+  goTo(state.current + 1);
+}
+function finishGame() {
+  state.finished = true; state.screen = 'final'; Timer.stop(); save(); render(true);
+}
+
+/* ---------- Arrastrar con ratón, dedo o lápiz (eventos de puntero) ---------- */
+const Drag = { cur: null, suppressClick: false };
+function zoneAt(x, y) { const el = document.elementFromPoint(x, y); return el && el.closest('#activity [data-zone]'); }
+function dragCleanup() {
+  const d = Drag.cur; if (!d) return;
+  if (d.ghost) d.ghost.remove();
+  if (d.el) d.el.classList.remove('drag-src');
+  $$('.drop-hover').forEach(z => z.classList.remove('drop-hover'));
+  Drag.cur = null;
+}
+function initDrag() {
+  $('#activity').addEventListener('pointerdown', e => {
+    if (e.button !== undefined && e.button !== 0) return;
+    const el = e.target.closest('[data-card]'); if (!el) return;
+    Drag.cur = { id: el.dataset.card, el, x: e.clientX, y: e.clientY, pid: e.pointerId, active: false, ghost: null };
+  });
+  window.addEventListener('pointermove', e => {
+    const d = Drag.cur; if (!d || e.pointerId !== d.pid) return;
+    if (!d.active) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 10) return;
+      const r = d.el.getBoundingClientRect();
+      d.active = true; d.dx = d.x - r.left; d.dy = d.y - r.top;
+      d.ghost = d.el.cloneNode(true);
+      d.ghost.classList.add('ghost'); d.ghost.classList.remove('selected');
+      d.ghost.removeAttribute('data-card'); d.ghost.removeAttribute('data-k'); d.ghost.setAttribute('aria-hidden', 'true');
+      d.ghost.style.width = r.width + 'px'; d.ghost.style.height = r.height + 'px';
+      document.body.appendChild(d.ghost);
+      d.el.classList.add('drag-src');
+    }
+    d.ghost.style.transform = `translate(${e.clientX - d.dx}px,${e.clientY - d.dy}px) rotate(4deg)`;
+    const z = zoneAt(e.clientX, e.clientY);
+    $$('.drop-hover').forEach(el => { if (el !== z) el.classList.remove('drop-hover'); });
+    if (z) z.classList.add('drop-hover');
+  });
+  window.addEventListener('pointerup', e => {
+    const d = Drag.cur; if (!d || e.pointerId !== d.pid) return;
+    if (d.active) {
+      const z = zoneAt(e.clientX, e.clientY);
+      Drag.suppressClick = true; setTimeout(() => { Drag.suppressClick = false; }, 80);
+      const id = d.id; dragCleanup();
+      if (z) { const q = curQ(), u = curUI(); moveCard(q, u.a, id, z.dataset.zone); u.a.sel = null; clearFeedback(); renderActivity(); }
+    } else dragCleanup();
+  });
+  window.addEventListener('pointercancel', dragCleanup);
+}
+
+/* ---------- Temporizador opcional ---------- */
+const Timer = {
+  left: 0, running: false, end: 0, id: null, lastWhole: null,
+  stop() { clearInterval(this.id); this.id = null; this.running = false; },
+  reset() { this.stop(); this.left = state.timer; this.lastWhole = null; $('#stage').classList.remove('time-up'); this.render(); },
+  toggle() { this.running ? this.pause() : this.start(); },
+  pause() { this.stop(); this.render(); },
+  start() {
+    if (!state.timer) return;
+    if (this.left <= 0) this.left = state.timer;
+    $('#stage').classList.remove('time-up');
+    this.running = true; this.end = Date.now() + this.left * 1000;
+    this.id = setInterval(() => this.tick(), 200); this.render();
+  },
+  tick() {
+    this.left = Math.max(0, (this.end - Date.now()) / 1000);
+    const whole = Math.ceil(this.left);
+    if (whole !== this.lastWhole) { this.lastWhole = whole; if (whole > 0 && whole <= 5) Sound.play('tick'); }
+    if (this.left <= 0) { this.stop(); $('#stage').classList.add('time-up'); Sound.play('time'); toast('⏰ ¡Se acabó el tiempo!'); }
+    this.render();
+  },
+  render() {
+    const box = $('#timer'); box.hidden = !state.timer; if (!state.timer) return;
+    const ring = $('#ring'), whole = Math.ceil(this.left);
+    ring.style.setProperty('--p', state.timer ? this.left / state.timer : 0);
+    ring.classList.toggle('low', this.running && whole <= 10);
+    ring.setAttribute('aria-label', `Tiempo restante: ${whole} segundos`);
+    $('#ring-num').textContent = whole;
+    const b = $('#t-toggle'); b.textContent = this.running ? '⏸' : '▶';
+    b.setAttribute('aria-label', this.running ? 'Pausar temporizador' : 'Iniciar temporizador');
+  }
+};
+
+/* ==========================================================================
+   8. PANEL DEL MODERADOR: MARCADOR, PUNTOS, HISTORIAL Y DESHACER
+   ========================================================================== */
+function renderPanel(fx) {
+  const panel = $('#modpanel'), q = curQ(), sug = suggested(q);
+  // Posiciones anteriores para animar el cambio de orden (técnica FLIP)
+  const before = {};
+  $$('.score-row', panel).forEach(r => { before[r.dataset.pid] = r.getBoundingClientRect().top; });
+  const focusId = document.activeElement && panel.contains(document.activeElement) ? document.activeElement.dataset.f : null;
+  const rows = ranked();
+  if (selectedPlayer && !state.players.some(p => p.id === selectedPlayer)) selectedPlayer = null;
+  const last = state.history.slice(-6).reverse();
+
+  panel.innerHTML = `
+    <section class="pbox" aria-labelledby="h-score">
+      <h3 id="h-score">🏆 Marcador</h3>
+      <ol class="score-list">${rows.map(p => `<li class="score-row r${p.rank}" data-pid="${p.id}">
+        <span class="rank" aria-label="Puesto ${p.rank}">${p.rank}</span><span class="name">${esc(p.name)}</span><span class="pts">${fmtNum(p.score)}</span>
+        <button type="button" class="icon-btn" data-edit-score="${p.id}" data-f="es-${p.id}" aria-label="Modificar a mano los puntos de ${esc(p.name)}">✏️</button></li>`).join('')}</ol>
+    </section>
+    <section class="pbox" aria-labelledby="h-give">
+      <h3 id="h-give">🎯 Asignar puntos</h3>
+      <div class="chips" role="group" aria-label="Elige participante">${state.players.map(p => `<button type="button" class="pchip" data-pick="${p.id}" data-f="pk-${p.id}" aria-pressed="${selectedPlayer === p.id}">${esc(p.name)}</button>`).join('')}</div>
+      <div class="pts-btns">
+        ${[1, 2, 3].map(n => `<button type="button" class="btn btn-green${n === sug ? ' suggested' : ''}" data-delta="${n}" data-f="d${n}" aria-label="Sumar ${n} ${n === 1 ? 'punto' : 'puntos'}${n === sug ? ' (sugerido)' : ''}">+${n}</button>`).join('')}
+        <button type="button" class="btn btn-red" data-delta="-1" data-f="dm1" aria-label="Restar 1 punto">−1</button>
+      </div>
+      <div class="custom-row">
+        <label for="custom-pts">Otra cantidad</label>
+        <input id="custom-pts" type="number" step="1" inputmode="numeric" data-f="cust" value="${esc(customVal)}">
+        <button type="button" class="btn btn-violet btn-sm" id="btn-custom" data-f="capply">Aplicar</button>
+      </div>
+      <p class="pnote">Sugerido para esta pregunta: ${q.final ? 'hasta 3 puntos (1 por mini-reto)' : plural(sug)}.</p>
+      <button type="button" class="btn btn-light wide" id="btn-nobody" data-f="nobody">🙅 Nadie acertó</button>
+    </section>
+    <section class="pbox" aria-labelledby="h-hist">
+      <h3 id="h-hist">🕘 Últimos cambios</h3>
+      <ul class="history">${last.length ? last.map(h => `<li><span class="hq">P${h.q}</span><span class="hn">${h.kind === 'none' ? 'Nadie acertó' : esc(h.name)}</span><span class="hd ${h.delta > 0 ? 'pos' : h.delta < 0 ? 'neg' : ''}">${h.kind === 'none' ? '—' : signed(h.delta)}</span></li>`).join('') : '<li>Aún no hay cambios.</li>'}</ul>
+      <button type="button" class="btn btn-yellow wide" id="btn-undo" data-f="undo" ${state.history.length ? '' : 'disabled'}>↩ Deshacer el último cambio</button>
+      <div class="timer-set"><label for="sel-timer">⏱ Tiempo</label>
+        <select id="sel-timer" data-f="tsel">${[0, 30, 45, 60, 90].map(t => `<option value="${t}"${t === state.timer ? ' selected' : ''}>${t ? t + ' segundos' : 'Sin tiempo'}</option>`).join('')}</select></div>
+    </section>`;
+
+  // Animación del participante que recibe puntos y del reordenamiento
+  $$('.score-row', panel).forEach(r => {
+    const old = before[r.dataset.pid];
+    if (old !== undefined && !reduceMotion() && r.animate) {
+      const dy = old - r.getBoundingClientRect().top;
+      if (Math.abs(dy) > 1) r.animate([{ transform: `translateY(${dy}px)` }, { transform: 'none' }], { duration: 450, easing: 'cubic-bezier(.2,.8,.2,1)' });
+    }
+    if (fx && String(fx.pid) === r.dataset.pid) {
+      r.classList.add('bump'); if (fx.delta < 0) r.classList.add('neg');
+      r.insertAdjacentHTML('beforeend', `<span class="float-delta${fx.delta < 0 ? ' neg' : ''}" aria-hidden="true">${signed(fx.delta)}</span>`);
+      if (r.scrollIntoView) r.scrollIntoView({ block: 'nearest' });
+    }
+  });
+  if (focusId) { const el = $(`[data-f="${focusId}"]`, panel); if (el && !el.disabled) el.focus({ preventScroll: true }); }
+
+  // Marcador resumido (visible cuando el panel está oculto)
+  $('#mini-score').innerHTML = rows.map(p => `<li>${p.rank}.º ${esc(p.name)}<b>${fmtNum(p.score)}</b></li>`).join('');
+}
+
+function award(pid, delta, kind = 'pts') {
+  const p = state.players.find(x => x.id === pid);
+  if (!p || !delta) return;
+  p.score += delta;
+  state.history.push({ kind, pid, name: p.name, delta, q: state.current + 1, t: Date.now() });
+  if (state.history.length > 300) state.history.shift();
+  save(); renderPanel({ pid, delta });
+  $('#q-live').textContent = `${p.name}: ${signed(delta)}. Total: ${plural(p.score)}.`;
+  if (delta > 0) {
+    Sound.play('point');
+    const special = curQ().bet || curQ().final;
+    Confetti.burst(special ? 110 : 50, state.panelHidden ? .5 : .86, .3);
+  } else Sound.play('minus');
+}
+function awardSelected(delta) {
+  if (!selectedPlayer) { toast('Elige primero a quién asignar los puntos.'); return; }
+  award(selectedPlayer, delta);
+}
+function nobody() {
+  state.history.push({ kind: 'none', pid: null, name: '', delta: 0, q: state.current + 1, t: Date.now() });
+  save(); renderPanel(); Sound.play('bad'); toast(`Pregunta ${state.current + 1}: nadie acertó.`);
+}
+function undo() {
+  const h = state.history.pop(); if (!h) return;
+  if (h.kind === 'none') { toast(`Deshecho: «nadie acertó» en la pregunta ${h.q}.`); save(); renderPanel(); return; }
+  const p = state.players.find(x => x.id === h.pid);
+  if (p) p.score -= h.delta;
+  save(); renderPanel(p ? { pid: p.id, delta: -h.delta } : undefined);
+  toast(p ? `Deshecho: ${signed(h.delta)} a ${h.name}.` : `Deshecho un cambio de ${h.name}, que ya no participa.`);
+}
+async function editScore(pid) {
+  const p = state.players.find(x => x.id === pid); if (!p) return;
+  const v = await promptModal({ title: `Puntos de ${esc(p.name)}`, label: 'Nueva puntuación', value: p.score, type: 'number' });
+  if (v === null) return;
+  const n = Math.round(Number(v));
+  if (v === '' || !Number.isFinite(n)) return toast('Escribe un número entero.');
+  if (n !== p.score) award(pid, n - p.score, 'set');
+}
+
+/* ==========================================================================
+   9. PANTALLA FINAL: PODIO, CSV, IMPRESIÓN Y REINICIO
+   ========================================================================== */
+function renderFinal(celebrate) {
+  const rows = ranked(), top = rows[0] ? rows[0].score : 0;
+  const winners = rows.filter(p => p.score === top);
+  const names = winners.map(w => esc(w.name));
+  $('#winner').innerHTML = winners.length === 1
+    ? `🥇 ¡Gana <b>${names[0]}</b> con ${plural(top)}!`
+    : `🤝 ¡Empate! Ganan <b>${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}</b> con ${plural(top)}`;
+  const medal = { 1: '🥇', 2: '🥈', 3: '🥉' };
+  $('#podium').innerHTML = rows.slice(0, 3).map((p, i) => `<div class="pod pod-${i} rank-${p.rank}">
+      <div class="pod-name">${esc(p.name)}</div><div class="pod-pts">${plural(p.score)}</div>
+      <div class="pod-block"><span aria-hidden="true">${medal[p.rank]}</span><span>${p.rank}.º</span></div></div>`).join('');
+  $('#final-list').innerHTML = rows.map((p, i) => `<li class="${p.score === top ? 'win' : ''}" style="animation-delay:${Math.min(i * 0.12, 2.4) + 0.6}s">
+      <span class="rank">${p.rank}.º</span><span class="name">${esc(p.name)}${p.score === top ? ' 👑' : ''}</span><span>${plural(p.score)}</span></li>`).join('');
+  $('#jump-grid').innerHTML = QUESTIONS.map((q, k) => `<button type="button" class="dot${q.bet || q.final ? ' star' : ''}" data-goto="${k}" aria-label="Volver a la pregunta ${k + 1}">${k + 1}</button>`).join('');
+
+  // Versión para imprimir
+  $('#print-area').innerHTML = `<h1>El Gran Reto de Decimales y Fracciones</h1><p>Resultados · ${new Date().toLocaleDateString('es-ES')}</p>
+    <h2>Clasificación final</h2><table><thead><tr><th>Posición</th><th>Participante</th><th>Puntos</th></tr></thead>
+    <tbody>${rows.map(p => `<tr><td>${p.rank}.º</td><td>${esc(p.name)}</td><td>${fmtNum(p.score)}</td></tr>`).join('')}</tbody></table>`;
+
+  if (celebrate) {
+    Sound.play('win');
+    Confetti.rain(320);
+    setTimeout(() => Confetti.burst(160, .5, .35), 900);
+  }
+}
+function downloadCSV() {
+  const cell = v => {
+    let s = String(v);
+    if (/^[=+\-@]/.test(s) && typeof v === 'string') s = "'" + s; // evita fórmulas al abrirlo en una hoja de cálculo
+    return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = [['Posición', 'Participante', 'Puntos'], ...ranked().map(p => [p.rank, p.name, p.score]), [],
+    ['Historial de puntos'], ['Pregunta', 'Participante', 'Cambio'],
+    ...state.history.map(h => [h.q, h.kind === 'none' ? 'Nadie acertó' : h.name, h.kind === 'none' ? 0 : h.delta])];
+  const csv = '﻿' + rows.map(r => r.map(cell).join(';')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'resultados-gran-reto.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Resultados descargados en CSV.');
+}
+async function reviewQuestions() {
+  const html = `<ol class="review">${QUESTIONS.map((q, i) => `<li>
+      <span class="meta">Pregunta ${i + 1} · ${q.category} · ${DIF[q.difficulty]}${q.bet ? ' · Apuesta' : ''}${q.final ? ' · Final' : ''}</span>
+      <span class="rq">${fmt(q.prompt)}${q.data.statement ? ' ' + fmt(q.data.statement) : ''}</span>
+      <span class="ra">Respuesta: <b>${fmt(q.answerText)}</b></span>
+      <button type="button" class="btn btn-violet btn-sm" data-close-with="${i}">Ir a la pregunta ${i + 1}</button></li>`).join('')}</ol>`;
+  const v = await modal({ title: '📋 Las 20 preguntas y sus respuestas', html, wide: true, buttons: [{ label: 'Cerrar', value: null }] });
+  if (v !== null && v !== undefined) jumpTo(Number(v));
+}
+function jumpTo(i) {
+  state.screen = 'game'; state.current = i; selectedPlayer = null; customVal = String(suggested(curQ()));
+  save(); Timer.reset(); render();
+}
+async function restartGame() {
+  const v = await modal({
+    title: '🔄 Reiniciar partida',
+    html: '<p>Se perderán las puntuaciones y el historial de esta partida.</p><p>¿Qué quieres hacer?</p>',
+    buttons: [{ label: 'Cancelar', value: null }, { label: 'Empezar de cero', cls: 'btn-red', value: 'all' }, { label: 'Mismos participantes, 0 puntos', cls: 'btn-violet', value: 'keep' }]
+  });
+  if (!v) return;
+  const keep = v === 'keep' ? state.players.map(p => ({ id: p.id, name: p.name, score: 0 })) : [];
+  const { sound, timer, nextId } = state;
+  state = Object.assign(defaultState(), { sound, timer, players: keep, nextId: keep.length ? nextId : 1 });
+  ui = {}; selectedPlayer = null; betChoice = 3;
+  save(); Timer.reset(); render(); toast('Partida reiniciada.');
+}
+async function clearSaved() {
+  if (!(await confirmModal('🗑 Borrar partida guardada', 'Se borrarán los participantes, las puntuaciones y el progreso guardados en este navegador. Esta acción no se puede deshacer.', 'Borrar todo'))) return;
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* nada */ }
+  const sound = state.sound;
+  state = Object.assign(defaultState(), { sound });
+  ui = {}; selectedPlayer = null; betChoice = 3;
+  Timer.reset(); render(); toast('Partida guardada borrada.');
+}
+
+/* ==========================================================================
+   10. CABECERA, CAMBIO DE PANTALLA Y EVENTOS
+   ========================================================================== */
+function toggleFullscreen() {
+  const d = document;
+  if (d.fullscreenElement) { d.exitFullscreen(); return; }
+  const el = d.documentElement;
+  const p = el.requestFullscreen ? el.requestFullscreen() : Promise.reject();
+  Promise.resolve(p).catch(() => toast('Este navegador no permite la pantalla completa aquí.'));
+}
+function renderHeader() {
+  const s = state.screen;
+  $('#btn-home').hidden = s === 'setup';
+  $('#btn-tofinal').hidden = !(state.finished && s === 'game');
+  const bp = $('#btn-panel'); bp.hidden = s !== 'game';
+  bp.setAttribute('aria-pressed', state.panelHidden);
+  bp.textContent = state.panelHidden ? '👀 Mostrar panel' : '🙈 Ocultar panel';
+  document.body.classList.toggle('panel-hidden', state.panelHidden && s === 'game');
+  const bs = $('#btn-sound'); bs.setAttribute('aria-pressed', state.sound);
+  bs.textContent = state.sound ? '🔊 Sonido: sí' : '🔇 Sonido: no';
+  const fs = !!document.fullscreenElement;
+  $('#btn-fs').setAttribute('aria-pressed', fs);
+  $('#btn-fs').textContent = fs ? '⛶ Salir de pantalla completa' : '⛶ Pantalla completa';
+  $('#btn-fs2').textContent = fs ? '⛶ Salir de pantalla completa' : '⛶ Modo pantalla completa';
+}
+function render(celebrate) {
+  const s = state.screen;
+  document.body.dataset.screen = s;
+  $('#screen-setup').hidden = s !== 'setup';
+  $('#screen-game').hidden = s !== 'game';
+  $('#screen-final').hidden = s !== 'final';
+  renderHeader();
+  if (s === 'setup') renderSetup();
+  if (s === 'game') { if (customVal === '') customVal = String(suggested(curQ())); Timer.render(); renderQuestion(); renderPanel(); }
+  if (s === 'final') renderFinal(celebrate);
+}
+
+function bindEvents() {
+  /* --- Cabecera --- */
+  $('#btn-sound').addEventListener('click', () => { state.sound = !state.sound; save(); renderHeader(); Sound.play('ok'); });
+  $('#btn-fs').addEventListener('click', toggleFullscreen);
+  $('#btn-fs2').addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', renderHeader);
+  $('#btn-panel').addEventListener('click', () => {
+    state.panelHidden = !state.panelHidden; save(); renderHeader();
+    const q = curQ(); if (ACT[q.type].after && !(q.bet && !state.betRevealed)) ACT[q.type].after(q, curUI().a, $('#activity'));
+  });
+  $('#btn-home').addEventListener('click', () => { Timer.pause(); state.screen = 'setup'; save(); render(); });
+  $('#btn-tofinal').addEventListener('click', () => { state.screen = 'final'; save(); render(); });
+
+  /* --- Pantalla inicial --- */
+  $('#form-add').addEventListener('submit', e => {
+    e.preventDefault();
+    const input = $('#in-name');
+    if (addPlayer(input.value)) input.value = '';
+    input.focus();
+  });
+  $('#plist').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const id = Number(b.closest('li').dataset.pid);
+    if (b.dataset.act === 'edit') editPlayer(id); else deletePlayer(id);
+  });
+  $('#seg-timer').addEventListener('change', e => { state.timer = Number(e.target.value); save(); Timer.reset(); });
+  $('#btn-start').addEventListener('click', startGame);
+  $('#btn-clear').addEventListener('click', clearSaved);
+
+  /* --- Zona de la pregunta --- */
+  const host = $('#activity');
+  host.addEventListener('click', e => {
+    if (Drag.suppressClick) return;
+    const q = curQ(), u = curUI(), act = ACT[q.type];
+    const keyEl = e.target.closest('[data-k]');
+    const res = act.click(q, u.a, e, host);
+    if (res) { clearFeedback(); renderActivity(); focusKey((res && res.focus) || (keyEl && keyEl.dataset.k)); }
+  });
+  host.addEventListener('input', e => { const q = curQ(), act = ACT[q.type]; if (act.input) act.input(q, curUI().a, e, host); });
+  host.addEventListener('focusin', e => { const q = curQ(), act = ACT[q.type]; if (act.focusin) act.focusin(q, curUI().a, e, host); });
+  host.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('.blank')) { e.preventDefault(); doCheck(); } });
+  initDrag();
+
+  $('#btn-check').addEventListener('click', doCheck);
+  $('#btn-retry').addEventListener('click', () => { const q = curQ(), u = curUI(); u.a = ACT[q.type].init(q); clearFeedback(); renderActivity(); });
+  $('#btn-hint').addEventListener('click', () => { const u = curUI(); u.hint = !u.hint; renderReveals(); if (u.hint) $('#hint').scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' }); });
+  $('#btn-sol').addEventListener('click', () => { const u = curUI(); u.sol = !u.sol; renderReveals(); if (u.sol) $('#solution').scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' }); });
+
+  $('#bet-gate').addEventListener('click', e => {
+    const b = e.target.closest('[data-bet]');
+    if (b) { betChoice = Number(b.dataset.bet); $$('[data-bet]', $('#bet-gate')).forEach(x => x.setAttribute('aria-pressed', x === b)); return; }
+    if (e.target.closest('#bet-go')) {
+      state.bet = betChoice; state.betRevealed = true; customVal = String(betChoice);
+      save(); renderQuestion(1); renderPanel(); Sound.play('ok');
+      toast(`Apuesta fijada: la pregunta vale ${plural(betChoice)}.`);
+    }
+  });
+
+  $('#btn-prev').addEventListener('click', () => goTo(state.current - 1));
+  $('#btn-next').addEventListener('click', nextQuestion);
+  $('#dots').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) goTo(Number(b.dataset.goto)); });
+  $('#t-toggle').addEventListener('click', () => Timer.toggle());
+  $('#t-reset').addEventListener('click', () => Timer.reset());
+  window.addEventListener('resize', () => {
+    if (state.screen !== 'game') return;
+    const q = curQ(); if (ACT[q.type].after && !(q.bet && !state.betRevealed)) ACT[q.type].after(q, curUI().a, host);
+  });
+
+  /* --- Panel del moderador (delegación de eventos) --- */
+  const panel = $('#modpanel');
+  panel.addEventListener('click', e => {
+    const t = e.target;
+    const pick = t.closest('[data-pick]');
+    if (pick) { const id = Number(pick.dataset.pick); selectedPlayer = selectedPlayer === id ? null : id; renderPanel(); return; }
+    const d = t.closest('[data-delta]');
+    if (d) return awardSelected(Number(d.dataset.delta));
+    if (t.closest('#btn-custom')) {
+      const n = Math.round(Number($('#custom-pts').value));
+      if (!Number.isFinite(n) || n === 0) return toast('Escribe una cantidad de puntos distinta de 0.');
+      return awardSelected(n);
+    }
+    if (t.closest('#btn-nobody')) return nobody();
+    if (t.closest('#btn-undo')) return undo();
+    const es = t.closest('[data-edit-score]');
+    if (es) editScore(Number(es.dataset.editScore));
+  });
+  panel.addEventListener('input', e => { if (e.target.id === 'custom-pts') customVal = e.target.value; });
+  panel.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'custom-pts') { e.preventDefault(); $('#btn-custom').click(); } });
+  panel.addEventListener('change', e => { if (e.target.id === 'sel-timer') { state.timer = Number(e.target.value); save(); Timer.reset(); } });
+
+  /* --- Pantalla final --- */
+  $('#btn-review').addEventListener('click', reviewQuestions);
+  $('#btn-csv').addEventListener('click', downloadCSV);
+  $('#btn-print').addEventListener('click', () => window.print());
+  $('#btn-restart').addEventListener('click', restartGame);
+  $('#jump-grid').addEventListener('click', e => { const b = e.target.closest('[data-goto]'); if (b) jumpTo(Number(b.dataset.goto)); });
+}
+
+/* ==========================================================================
+   11. ARRANQUE
+   ========================================================================== */
+const restored = load();
+bindEvents();
+Timer.left = state.timer;
+render();
+if (restored && state.started) toast('💾 Partida recuperada: continúas donde la dejaste.');
+})();
+</script>
+</body>
+</html>
